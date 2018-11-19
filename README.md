@@ -24,6 +24,6 @@ Classifier:
 Classifier (haven't started)  
 
 
-### problems ###
+### current problems ###
 1. Load large number of images: could solve by: shuffle img paths and load imgs accordingly, need to let keras keep training (Tong)
 	   
