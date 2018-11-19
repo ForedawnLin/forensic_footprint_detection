@@ -9,7 +9,7 @@ from keras.models import load_model
 import cv2 
 
 
-
+#### load data(temp) ####
 images = []
 for imgPath in glob.glob("../../FID-300/tracks_cropped/cropped/*.jpg"):
     img= cv2.imread(imgPath)[:,:,1]
@@ -35,10 +35,12 @@ test_images=np.array(images[train_num:])
 print (np.shape(test_images))
 
 
-
+#### evaluation of auto Encoder 
 
 autoEncoder = load_model('models/AE_model.h5') 
 recons=autoEncoder.predict(test_images)
-print (np.shape(recons))
+print ('recons_shape',np.shape(recons))
+print ('recons',recons[0,:,:,:])
 cv2.imshow('result',recons[0,:,:,:])
 cv2.waitKey()
+
