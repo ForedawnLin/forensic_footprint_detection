@@ -15,7 +15,7 @@
 
 
 ### current progress ### 
-Extractor
+Extractor (Tong)
 1. input random (need to load large image files)
 2. auto-encoder (baisc structure tested) : load batched data, save model, load model,prediction (tested)
 3. get weigths(feature extractor): haven't finished 
@@ -25,5 +25,5 @@ Classifier (haven't started)
 
 
 ### problems ###
-1. Load large number of images: could solve by: shuffle img paths and load imgs accordingly, need to let keras keep training
+1. Load large number of images: could solve by: shuffle img paths and load imgs accordingly, need to let keras keep training (Tong)
 	   
