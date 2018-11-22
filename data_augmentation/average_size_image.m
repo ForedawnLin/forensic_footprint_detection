@@ -6,7 +6,8 @@ offset=10; % set minimum offset of cropped image
 S_r = dir(fullfile(path_reference,'*.png'));
 S=dir(fullfile(path,'*.jpg'));
 load label_table;
-fileID = fopen('label_cropped.txt', 'w'); % file to save the label for cropped image
+fileID_test = fopen('label_test.txt', 'w'); % file to save the label for cropped image
+fileID_train = fopen('label_train.txt', 'w'); % file to save the label for cropped image
 height=0;
 width=0;
 %compute the average size of the reference images
@@ -28,14 +29,20 @@ for l =1:numel(S) % total number of images in the folder
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
     % preprocess the Image
-    for j=1:72
+    test_data_index=unique(randi([1,100],[1,20]));
+    for j=1:100
         %set the name for cropped images
         index=strcat(strcat(int2str(l),'_'),int2str(j));
-        patch_name=strcat(strcat(path, '/cropped/'), index);
-
+        if ismember(j,test_data_index)
+            patch_name=strcat(strcat(path, '/cropped/test/'), index);
+            fileID=fileID_test;
+        else 
+            patch_name=strcat(strcat(path, '/cropped/train/'), index);
+            fileID=fileID_train;
+        end
         %generate number of modifications for each cropped image
         no_image_change=randi([0 4]);
-        patch=imrotate(I,5*j);
+        patch=imrotate(I,3.6*j);
         for i=1:no_image_change
             % generate the type of modification 
             % 1: affine
