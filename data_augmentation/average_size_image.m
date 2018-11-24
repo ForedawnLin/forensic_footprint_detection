@@ -75,7 +75,7 @@ for l =1:numel(S) % total number of images in the folder
         end       
         J = imresize(I,[PH PW]);
         fprintf(fileID,'%s, %i\n',index, label_table(l,2)); % write the label of cropped image
-        imwrite(patch,strcat(patch_name,'.jpg'));
+        imwrite(J,strcat(patch_name,'.jpg'));
     end
 end
 
