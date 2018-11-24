@@ -40,10 +40,12 @@ def autoencoder(input_img):
 ### load data ###
 
 images = []
-for imgPath in glob.glob("../../FID-300/tracks_cropped/cropped/*.jpg"):
+for imgPath in glob.glob("../../FID-300/cropped/*.jpg"):#tracks_cropped/cropped/train/*.jpg"):
+    print (imgPath)
     img= cv2.imread(imgPath)[:,:,1]
     img=cv2.resize(img,(np.shape(img)[0]-1,np.shape(img)[1]-1))/255
     img= np.reshape(img,(np.shape(img)[0],np.shape(img)[1],1)) ## instead of m*n, reshape img to m*n*1 for keras input  
+    #print (np.shape(img))
     images.append(img)
     if np.shape(images)[0]==100:
     	break 
@@ -84,5 +86,5 @@ autoEncoder.summary()
 
 
 autoencoder_train = autoEncoder.fit(train_images, train_images, batch_size=batch_size,epochs=epochs,verbose=1,validation_data=(test_images, test_images))
-autoEncoder.save('AE_model.h5')
+autoEncoder.save('models/AE_model.h5')
 

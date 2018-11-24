@@ -32,7 +32,7 @@ def get_encoder(AE_model_path,input_img):
 
 #### load data(temp) ####
 images = []
-for imgPath in glob.glob("../../FID-300/tracks_cropped/cropped/*.jpg"):
+for imgPath in glob.glob("../../FID-300/cropped/*.jpg"):#tracks_cropped/cropped/train/*.jpg"):
     img= cv2.imread(imgPath)[:,:,1]
     img=cv2.resize(img,(np.shape(img)[0]-1,np.shape(img)[1]-1))/255
     img= np.reshape(img,(np.shape(img)[0],np.shape(img)[1],1)) ## instead of m*n, reshape img to m*n*1 for keras input  
@@ -53,7 +53,7 @@ test_num=n_imgs-train_num
 
 train_images=np.array(images[:train_num])
 test_images=np.array(images[train_num:])
-print (np.shape(test_images))
+print ('test_image_sizes:',np.shape(test_images))
 
 
 
@@ -77,11 +77,15 @@ encoder.summary()
 
 ### get extracted features ### 
 features=encoder.predict(test_images)
-print (np.shape(features))
+print ('features_sizes:',np.shape(features))
+np.save('feature.npy',features)
+
 feature=features[0,:,:,0] ### get one feature 
 feature=np.divide(feature-np.min(feature),np.max(feature)-np.min(feature)) ### normalize features 
 
-print (np.shape(feature))
-print ('one feature',feature)
-cv2.imshow('result',feature) ## show one feature 
-cv2.waitKey()
+#print (np.shape(feature))
+
+#print (np.load('feature.npy'))
+#print ('one feature',feature)
+#cv2.imshow('result',feature) ## show one feature 
+#cv2.waitKey()

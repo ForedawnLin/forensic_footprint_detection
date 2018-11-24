@@ -1,11 +1,11 @@
 path=pwd;
-path_reference=strcat(path,'/references')
-path =strcat(path,'/tracks_cropped');
+path_reference=strcat(path,'\..\..\FID-300\references')
+path =strcat(path,'\..\..\FID-300\tracks_cropped');
 N = 300; % set number of croped image
 offset=10; % set minimum offset of cropped image
 S_r = dir(fullfile(path_reference,'*.png'));
 S=dir(fullfile(path,'*.jpg'));
-load label_table;
+load ..\..\FID-300\label_table;
 fileID_test = fopen('label_test.txt', 'w'); % file to save the label for cropped image
 fileID_train = fopen('label_train.txt', 'w'); % file to save the label for cropped image
 height=0;
