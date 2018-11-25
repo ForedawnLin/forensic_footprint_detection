@@ -11,7 +11,7 @@ import cv2
 
 #### load data(temp) ####
 images = []
-for imgPath in glob.glob("../../FID-300/tracks_cropped/cropped/*.jpg"):
+for imgPath in glob.glob("../../FID-300/tracks_cropped/cropped/test/*.jpg"):
     img= cv2.imread(imgPath)[:,:,1]
     img=cv2.resize(img,(np.shape(img)[0]-1,np.shape(img)[1]-1))/255
     img= np.reshape(img,(np.shape(img)[0],np.shape(img)[1],1)) ## instead of m*n, reshape img to m*n*1 for keras input  
