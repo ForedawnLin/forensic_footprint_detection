@@ -80,3 +80,4 @@ for l =1:numel(S) % total number of images in the folder
 end
 
 fclose(fileID);
+fclose('all');
