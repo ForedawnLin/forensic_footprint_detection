@@ -24,22 +24,24 @@ for l =1:numel(S) % total number of images in the folder
     
     F = fullfile(path,S(l).name);
     I = imread(F); %read image
-    %J = imresize(I,[PH PW])
     
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
     % preprocess the Image
-    test_data_index=unique(randi([1,100],[1,20]));
+    test_data_index=unique(randi([1,300],[1,60]));
+    %generate test images
+    if ismember(l,test_data_index)
+        J = imresize(I,[PH PW]);
+        patch_name=strcat(strcat(path, '/cropped/test/'), int2str(l));
+        fprintf(fileID_test,' %i,', label_table(l,2)); % write the label of cropped image
+        imwrite(J,strcat(patch_name,'.jpg'));
+    end
     for j=1:100
         %set the name for cropped images
         index=strcat(strcat(int2str(l),'_'),int2str(j));
-        if ismember(j,test_data_index)
-            patch_name=strcat(strcat(path, '/cropped/test/'), index);
-            fileID=fileID_test;
-        else 
-            patch_name=strcat(strcat(path, '/cropped/train/'), index);
-            fileID=fileID_train;
-        end
+
+        patch_name=strcat(strcat(path, '/cropped/train/'), index);
+
         %generate number of modifications for each cropped image
         no_image_change=randi([0 4]);
         patch=imrotate(I,3.6*j);
@@ -73,11 +75,16 @@ for l =1:numel(S) % total number of images in the folder
                     patch=imgaussfilt(patch,2);
             end
         end       
-        J = imresize(I,[PH PW]);
-        fprintf(fileID,'%s, %i\n',index, label_table(l,2)); % write the label of cropped image
+
+        J = imresize(patch,[PH PW]);
+        %fprintf(fileID_train,'%s, %i\n',index, label_table(l,2)); % write the label of cropped image
+        fprintf(fileID_train,'%i\n', label_table(l,2)); % write the label of cropped image
+
         imwrite(J,strcat(patch_name,'.jpg'));
     end
 end
 
+
 fclose(fileID);
 fclose('all');
+
