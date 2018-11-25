@@ -67,8 +67,8 @@ def custom_loss2(y_true,y_pred):
 
 imagePaths_list=[]
 for imgPath in glob.glob("../../FID-300/tracks_cropped/cropped/train/*.jpg"):
-	    #print (imgPath)
-    imagePaths_list.append(imgPath)
+	print (imgPath)
+	imagePaths_list.append(imgPath)
 image_num=np.size(imagePaths_list) ### total image numbers 
 
 train_valid_ratio=4
