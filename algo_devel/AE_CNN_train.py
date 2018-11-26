@@ -34,29 +34,29 @@ def autoencoder_CNN(input_img):
 	#CNN_pool_2 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1) #7 x 7 x 64
 	flat1 = Flatten()(CNN_conv_1)
 	#dense1=Dense(1000, activation='relu')(flat1)
-	classifer=Dense(10, activation='softmax')(flat1)
+	classifer=Dense(1175, activation='softmax')(flat1)
 	return decoded,classifer
 
 
 
-def custom_loss1(y_true, y_pred):
+def AE_loss(y_true, y_pred):
 	### AE loss 
 	y1_pred = y_pred
 	y1_true = y_true
 	#loss1= K.mean(K.square(y1_true-y1_pred))
 	loss1= mean_squared_error(y1_true,y1_pred)
-	print ('y1_pred:',K.int_shape(y1_pred) )
-	print ('y1_true:',K.int_shape(y1_true) )
-	print ('MSE loss1 shape',K.int_shape(loss1))
+	# print ('y1_pred:',K.int_shape(y1_pred) )
+	# print ('y1_true:',K.int_shape(y1_true) )
+	# print ('MSE loss1 shape',K.int_shape(loss1))
 	return loss1#{'loss1':loss1,'loss2':loss2}
 
-def custom_loss2(y_true,y_pred):
+def Classifier_loss(y_true,y_pred):
 	y2_pred = y_pred
 	y2_true = y_true
 	loss2= categorical_crossentropy(y2_true,y2_pred)
-	print ('y2_pred:',K.int_shape(y2_pred) )
-	print ('y2_true:',K.int_shape(y2_true) )
-	print ('CE loss2 shape',K.int_shape(loss2))
+	# print ('y2_pred:',K.int_shape(y2_pred) )
+	# print ('y2_true:',K.int_shape(y2_true) )
+	# print ('CE loss2 shape',K.int_shape(loss2))
 	#loss=[loss1,loss2]
 	return loss2
 
@@ -64,11 +64,26 @@ def custom_loss2(y_true,y_pred):
 
 
 ### load data ###
+mainPath='../../FID-300/tracks_cropped/cropped/train/'  ## main path of the pictures 
+pic_fmt='.jpg'  ## picture format 
+imagePaths_list=[]  ## init image paths
+train_index_path='../data_augmentation/label_train_index.txt' 
+train_label_path= '../data_augmentation/label_train.txt'
+FileID_train_index=open(train_index_path,'r')
+for indice in FileID_train_index:
+	indice=indice.replace(' ','')
+	index=indice.split(',')
+index=index[:-1]
+#print (index)
+FileID_train_label=open(train_label_path,'r')
+for labels in FileID_train_label:
+	label=labels.split(',')
+label=label[:-1]
+#print (label)
+imagePaths_list=[mainPath+index[i]+pic_fmt for i in np.arange(len(index))]
+label=[int(label[i])-1 for i in np.arange(len(label))]  ## -1 b/c zero index 
+max_label=1175
 
-imagePaths_list=[]
-for imgPath in glob.glob("../../FID-300/tracks_cropped/cropped/train/*.jpg"):
-	print (imgPath)
-	imagePaths_list.append(imgPath)
 image_num=np.size(imagePaths_list) ### total image numbers 
 
 train_valid_ratio=4
@@ -80,16 +95,19 @@ print ('train_num:',train_num)
 print ('valid_num:',valid_num)
 
 train_imagePaths_list=imagePaths_list[:train_num]
+train_label=label[:train_num]
 valid_imagePaths_list=imagePaths_list[train_num:image_num]
-
+valid_label=label[train_num:image_num]
 
 
 #### trainig settings ####
 train_ord=np.random.permutation(train_num)
 train_random_paths=[train_imagePaths_list[i] for i in train_ord] ### randomize training image paths
+train_random_label=[train_label[i] for i in train_ord]
+#print (train_random_label)
 
 
-batch_size = 20
+batch_size = 24
 iters_batch = int(np.floor(np.true_divide(train_num,batch_size)))
 epochs = 10
 
@@ -111,39 +129,49 @@ resize_w=128; ### resize image to before feeding into network
 resize_h=128;
 input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 autoEncoder_CNN = Model(input_img, autoencoder_CNN(input_img)) ### create model 
-autoEncoder_CNN.compile(loss=[custom_loss1,custom_loss2], optimizer = 'sgd',loss_weights=[0.5, 0.5])
+autoEncoder_CNN.compile(loss=[AE_loss,Classifier_loss], optimizer = 'sgd',loss_weights=[0.5, 0.5])
 autoEncoder_CNN.summary()
 		
 
 
 
 
-def generate_data(paths_list,total_image_num,batch_size,w,h):
-	### paths_list: list contains paths for images 
+def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_label):
+	### img_paths_list: list contains paths for images 
+	### label_list: associated label list 
 	### total_image_num: len(paths_list), the total images in the list 
 	### batch_size: the batch size 
 	### w,h: resize size for input imgage  
+	### max_label: the lagest label num, define the one-hot vector dimension 
 	i=0 
 	while True:
-		image_batch=[]
+		image_batch=[] ### batched image 
+		label_batch=[] ### asscociated batched labels 
 		for index in np.arange(batch_size):
 			if i==total_image_num:
 				i=0 
-			img_path=paths_list[i]
+			img_path=img_paths_list[i]
+			label=label_list[i]
 			i+=1;			
-			img= cv2.imread(imgPath)[:,:,1]
+			img= cv2.imread(img_path)[:,:,1]
 			#print ('img',np.shape(img))
 			img= cv2.resize(img,(w,h))/255  ### -2 for maxpool and upsample commendation 
 			img= np.reshape(img,(np.shape(img)[0],np.shape(img)[1],1)) ## instead of m*n, reshape img to 1*m*n*1 for keras input 
 			image_batch.append(img)
+			label_vector= np.zeros(max_label)
+			# print (np.shape(label_vector))
+			label_vector[label]=1
+			label_batch.append(label_vector)
 		image_batch=np.array(image_batch)
-		yield (image_batch, image_batch) ##(input, output)
+		label_batch=np.array(label_batch)
+		#print (np.shape(label_batch))
+		yield (image_batch, [image_batch,label_batch]) ##(input, output)
 
 
 
-# autoEncoder.fit_generator(generator=generate_data(train_random_paths,train_num,batch_size,resize_w,resize_h),
-#                     steps_per_epoch=iters_batch, epochs=epochs,validation_data=generate_data(valid_imagePaths_list,valid_num,valid_batch_size,resize_w,resize_h),validation_steps=valid_iters_batch)
+autoEncoder_CNN.fit_generator(generator=generate_data(train_random_paths,train_random_label,train_num,batch_size,resize_w,resize_h,max_label),
+                     steps_per_epoch=iters_batch, epochs=epochs,validation_data=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label),validation_steps=valid_iters_batch)
 
 
-#autoEncoder.save('models/AE_model.h5')
+autoEncoder.save('models/AE_CNN_model.h5')
 

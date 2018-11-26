@@ -112,7 +112,7 @@ def generate_data(paths_list,total_image_num,batch_size,w,h):
 				i=0 
 			img_path=paths_list[i]
 			i+=1;			
-			img= cv2.imread(imgPath)[:,:,1]
+			img= cv2.imread(img_path)[:,:,1]
 			#print ('img',np.shape(img))
 			img= cv2.resize(img,(w,h))/255  ### -2 for maxpool and upsample commendation 
 			img= np.reshape(img,(np.shape(img)[0],np.shape(img)[1],1)) ## instead of m*n, reshape img to 1*m*n*1 for keras input 

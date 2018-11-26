@@ -18,14 +18,15 @@
 
 ### current progress ### 
 Extractor (Tong)
-1. input random (need to load large image files)
+1. input random (need to load large image files) (solved) 
 2. auto-encoder (baisc structure tested) : load batched data, save model, load model,prediction (tested)
 3. get encoder output(feature extractor tested): extract encoder part of AE, encoder prediction(feature extraction)(tested) 
 
 Classifier: 
-Classifier (haven't started)  
+Classifier (Added AE_CNN classifier) (Tong)
+1. Classifier 1: train AE_CNN_classifier: two outputs: 1. MSE loss for AE 2. crossentropy(CE) loss for classification   
 
 
 ### current problems ###
-1. Load large number of images: could solve by: shuffle img paths and load imgs accordingly, need to let keras keep training (Tong)
+1. (solved)Load large number of images: could solve by: shuffle img paths and load imgs accordingly, need to let keras keep training (Tong)
 	   
