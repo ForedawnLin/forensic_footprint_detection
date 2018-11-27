@@ -72,8 +72,10 @@ train_label_path= '../data_augmentation/label_train.txt'
 FileID_train_index=open(train_index_path,'r')
 for indice in FileID_train_index:
 	indice=indice.replace(' ','')
+	#indice=indice.replace('r','',1)
 	index=indice.split(',')
 index=index[:-1]
+#index=['r'+index[i] for i in np.arange(len(index)) if 'r' in index[i]]
 #print (index)
 FileID_train_label=open(train_label_path,'r')
 for labels in FileID_train_label:
@@ -107,9 +109,9 @@ train_random_label=[train_label[i] for i in train_ord]
 #print (train_random_label)
 
 
-batch_size = 24
+batch_size = 32
 iters_batch = int(np.floor(np.true_divide(train_num,batch_size)))
-epochs = 10
+epochs = 1	
 
 #n_valid_check=50 ### number of validation images for check at each iteration  
 valid_batch_size = 50
@@ -119,7 +121,10 @@ valid_iters_batch = int(np.floor(np.true_divide(valid_num,valid_batch_size)))
 
 
 n_imgs=batch_size ### input layer image number 
+print(imagePaths_list[0])
 img= cv2.imread(imagePaths_list[0])[:,:,1]
+#cv2.imshow('img',img)
+#cv2.waitKey()
 img_h=np.shape(img)[0] ### input layer image height 
 img_w=np.shape(img)[1] ### input layer image width
 img_channel=1 ### input layer image width, gray image 	
@@ -152,8 +157,11 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 				i=0 
 			img_path=img_paths_list[i]
 			label=label_list[i]
-			i+=1;			
-			img= cv2.imread(img_path)[:,:,1]
+			i+=1;	
+			try:		
+				img= cv2.imread(img_path)[:,:,1]
+			except:
+				print ('not_found:',img_path)
 			# print ('img',np.shape(img))
 			img= cv2.resize(img,(w,h))/255  ### -2 for maxpool and upsample commendation 
 			img= np.reshape(img,(np.shape(img)[0],np.shape(img)[1],1)) ## instead of m*n, reshape img to 1*m*n*1 for keras input 
@@ -173,5 +181,5 @@ autoEncoder_CNN.fit_generator(generator=generate_data(train_random_paths,train_r
                      steps_per_epoch=iters_batch, epochs=epochs,validation_data=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label),validation_steps=valid_iters_batch)
 
 
-autoEncoder.save('models/AE_CNN_model.h5')
+autoEncoder_CNN.save('models/AE_CNN_model.h5')
 
