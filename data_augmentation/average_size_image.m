@@ -81,7 +81,7 @@ for l =1:numel(S) % total number of images in the folder
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
     % preprocess the Image
-    test_data_index=unique(randi([1,300],[1,60]));
+    test_data_index=randperm(300,60);
     %generate test images
     if ismember(l,test_data_index)
         J = imresize(I,[PH PW]);
