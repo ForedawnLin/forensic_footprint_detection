@@ -7,6 +7,7 @@ from keras.optimizers import RMSprop
 from keras.preprocessing import image
 from keras.losses import mean_squared_error,categorical_crossentropy 
 from keras import backend as K
+from keras.callbacks import ModelCheckpoint
 
 import cv2 
 
@@ -64,42 +65,70 @@ def Classifier_loss(y_true,y_pred):
 
 
 ### load data ###
-mainPath='../../FID-300/tracks_cropped/cropped/train/'  ## main path of the pictures 
-pic_fmt='.jpg'  ## picture format 
-imagePaths_list=[]  ## init image paths
+def load_data(main_path,index_path,label_path):
+	pic_fmt='.jpg'  ## picture format 
+	imagePaths_list=[]  ## init image paths
+	FileID_index=open(index_path,'r')
+	for indice in FileID_index:
+		indice=indice.replace(' ','')
+		#indice=indice.replace('r','',1)
+		index=indice.split(',')
+	index=index[:-1]
+	indice=[]
+	for path in index:
+		if 'r' in path:
+			indice.append('r'+path)
+		else:
+			indice.append(path)  
+	#index=['r'+index[i] for i in np.arange(len(index)) if 'r' in index[i]]  ### name issue, for reference image, its named as r+name_in_file
+	#print (indice)
+	FileID_label=open(label_path,'r')
+	for labels in FileID_label:
+		label=labels.split(',')
+	label=label[:-1]
+	#print (label)
+	imagePaths_list=[main_path+indice[i]+pic_fmt for i in np.arange(len(index))]
+	label=[int(label[i])-1 for i in np.arange(len(label))]  ## -1 b/c zero index 
+	return imagePaths_list,label 
+
+mainPath_train='../../FID-300/tracks_cropped/cropped/train/'  ## main path of the pictures 
 train_index_path='../data_augmentation/label_train_index.txt' 
 train_label_path= '../data_augmentation/label_train.txt'
-FileID_train_index=open(train_index_path,'r')
-for indice in FileID_train_index:
-	indice=indice.replace(' ','')
-	#indice=indice.replace('r','',1)
-	index=indice.split(',')
-index=index[:-1]
-#index=['r'+index[i] for i in np.arange(len(index)) if 'r' in index[i]]
-#print (index)
-FileID_train_label=open(train_label_path,'r')
-for labels in FileID_train_label:
-	label=labels.split(',')
-label=label[:-1]
-#print (label)
-imagePaths_list=[mainPath+index[i]+pic_fmt for i in np.arange(len(index))]
-label=[int(label[i])-1 for i in np.arange(len(label))]  ## -1 b/c zero index 
+imagePaths_list_train,label=load_data(mainPath_train,train_index_path,train_label_path)
+
+mainPath_test='../../FID-300/tracks_cropped/cropped/test/'  ## main path of the pictures 
+test_index_path='../data_augmentation/label_test_index.txt' 
+test_label_path= '../data_augmentation/label_test.txt'
+imagePaths_list_test,label_test=load_data(mainPath_test,test_index_path,test_label_path)
+
+#print (imagePaths_list_test)
+print (label_test)
+print ('label num:',len(list(set(label))))
 max_label=1175
 
-image_num=np.size(imagePaths_list) ### total image numbers 
+image_num=np.size(imagePaths_list_train) ### total image numbers 
 
-train_valid_ratio=4
-train_num=int(np.floor(image_num/(train_valid_ratio+1)*train_valid_ratio))
-valid_num=image_num-train_num
+train_num=image_num
+#train_valid_ratio=4
+#train_num=int(np.floor(image_num/(train_valid_ratio+1)*train_valid_ratio))
+#valid_num=image_num-train_num
+
+
+train_imagePaths_list=imagePaths_list_train[:train_num]
+train_label=label[:train_num]
+#valid_imagePaths_list=imagePaths_list[train_num:image_num]
+#valid_label=label[train_num:image_num]
+valid_imagePaths_list=imagePaths_list_test
+valid_label=label_test
+valid_num=len(valid_label)
+print ('valid_image_num', len(valid_imagePaths_list))
+print ('valid_label_num',valid_num)
 
 print ('img_num:',image_num)
 print ('train_num:',train_num)
-print ('valid_num:',valid_num)
+#print ('valid_num:',valid_num)
+print ('test_num:',len(valid_label))
 
-train_imagePaths_list=imagePaths_list[:train_num]
-train_label=label[:train_num]
-valid_imagePaths_list=imagePaths_list[train_num:image_num]
-valid_label=label[train_num:image_num]
 
 
 #### trainig settings ####
@@ -111,18 +140,19 @@ train_random_label=[train_label[i] for i in train_ord]
 
 batch_size = 32
 iters_batch = int(np.floor(np.true_divide(train_num,batch_size)))
-epochs = 1	
+epochs = 1000	
 
 #n_valid_check=50 ### number of validation images for check at each iteration  
-valid_batch_size = 50
+#valid_batch_size = 50
+valid_batch_size = len(label_test)
 valid_iters_batch = int(np.floor(np.true_divide(valid_num,valid_batch_size)))
 
 
 
 
 n_imgs=batch_size ### input layer image number 
-print(imagePaths_list[0])
-img= cv2.imread(imagePaths_list[0])[:,:,1]
+print(train_imagePaths_list[0])
+img= cv2.imread(train_imagePaths_list[0])[:,:,1]
 #cv2.imshow('img',img)
 #cv2.waitKey()
 img_h=np.shape(img)[0] ### input layer image height 
@@ -134,8 +164,10 @@ resize_w=128; ### resize image to before feeding into network
 resize_h=128;
 input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 autoEncoder_CNN = Model(input_img, autoencoder_CNN(input_img)) ### create model 
-autoEncoder_CNN.compile(loss=[AE_loss,Classifier_loss], optimizer = 'sgd',loss_weights=[0.5, 0.5])
-autoEncoder_CNN.summary()
+#sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+autoEncoder_CNN.compile(loss=[AE_loss,Classifier_loss],optimizer = 'Adagrad',loss_weights=[0.5, 0.5])
+print ('metric_name:',autoEncoder_CNN.metrics_names)
+#autoEncoder_CNN.summary()
 		
 
 
@@ -176,10 +208,16 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 		yield (image_batch, [image_batch,label_batch]) ##(input, output)
 
 
+# checkpoint
+filepath="models/AE_CNN_model_weights.{epoch:02d}-{val_loss:.2f}.hdf5"
+checkpoint = ModelCheckpoint(filepath, monitor='val_dense_1_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
+callbacks_list = [checkpoint]
+
 
 autoEncoder_CNN.fit_generator(generator=generate_data(train_random_paths,train_random_label,train_num,batch_size,resize_w,resize_h,max_label),
-                     steps_per_epoch=iters_batch, epochs=epochs,validation_data=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label),validation_steps=valid_iters_batch)
+                     steps_per_epoch=iters_batch, epochs=epochs,validation_data=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label),validation_steps=valid_iters_batch,callbacks=callbacks_list,shuffle=True)
 
 
 autoEncoder_CNN.save('models/AE_CNN_model.h5')
+autoEncoder_CNN.save_weights("models/AE_CNN_model_weights.h5")
 
