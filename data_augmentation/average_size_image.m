@@ -30,7 +30,7 @@ for l =1:numel(S_r)
     for j=1:100
         %set the name for cropped images
         index=strcat(strcat(int2str(l),'_'),int2str(j));
-        index=strcat(index,'r');
+        index=strcat('r',index);
         patch_name=strcat(strcat(path, '/cropped/train/r'), index);
 
         %generate number of modifications for each cropped image
