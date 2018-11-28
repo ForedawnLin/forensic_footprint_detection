@@ -1,7 +1,7 @@
 import numpy as np 
 #import system 
 import glob
-from keras.layers import Input,Conv2D,MaxPooling2D,UpSampling2D,Dense,Flatten
+from keras.layers import Input,Conv2D,MaxPooling2D,UpSampling2D,Dense,Flatten,BatchNormalization,Dropout
 from keras.models import Model
 from keras.optimizers import RMSprop
 from keras.preprocessing import image
@@ -16,24 +16,48 @@ import cv2
 
 
 def autoencoder_CNN(input_img):
+	dropRate=0.5
+
 	conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(input_img) #28 x 28 x 32
-	pool1 = MaxPooling2D(pool_size=(2, 2))(conv1) #14 x 14 x 32
-	conv2 = Conv2D(64, (3, 3), activation='relu', padding='same')(pool1) #14 x 14 x 64
-	pool2 = MaxPooling2D(pool_size=(2, 2))(conv2) #7 x 7 x 64
-	conv3 = Conv2D(128, (3, 3), activation='relu', padding='same')(pool2) #7 x 7 x 128 (small and thick)
+	norm1=BatchNormalization()(conv1)
+	pool1 = MaxPooling2D(pool_size=(2, 2))(norm1) #14 x 14 x 32
+	drop1=Dropout(dropRate)(pool1)
+	
+
+	conv2 = Conv2D(64, (3, 3), activation='relu', padding='same')(drop1) #14 x 14 x 64
+	norm2=BatchNormalization()(conv2)
+	pool2 = MaxPooling2D(pool_size=(2, 2))(norm2) #7 x 7 x 64
+	drop2=Dropout(dropRate)(pool2)
+	
+	conv3 = Conv2D(128, (3, 3), activation='relu', padding='same')(drop2) #7 x 7 x 128 (small and thick)
+	norm3=BatchNormalization()(conv3)
+	
+	
 
 	#decoder
-	conv4 = Conv2D(128, (3, 3), activation='relu', padding='same')(conv3) #7 x 7 x 128
-	up1 = UpSampling2D((2,2))(conv4) # 14 x 14 x 128
-	conv5 = Conv2D(64, (3, 3), activation='relu', padding='same')(up1) # 14 x 14 x 64
-	up2 = UpSampling2D((2,2))(conv5) # 28 x 28 x 64
-	decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(up2) # 28 x 28 x 1
+	drop3=Dropout(dropRate)(norm3)
+	conv4 = Conv2D(128, (3, 3), activation='relu', padding='same')(drop3) #7 x 7 x 128
+	norm4=BatchNormalization()(conv4)
+	up1 = UpSampling2D((2,2))(norm4) # 14 x 14 x 128
+	drop4=Dropout(dropRate)(up1)
+		
+	conv5 = Conv2D(64, (3, 3), activation='relu', padding='same')(drop4) # 14 x 14 x 64
+	norm5=BatchNormalization()(conv5)
+	up2 = UpSampling2D((2,2))(norm5) # 28 x 28 x 64
+	drop5=Dropout(dropRate)(up2)
+		
+	decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(drop5) # 28 x 28 x 1
 
 	# CNN classifier 
-	CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))(conv3) #16 x 16 x 128
-	CNN_conv_1 = Conv2D(128, (16, 16), activation='relu')(CNN_pool_1) #1 x 1 x 64
+	CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))(norm3) #16 x 16 x 128
+	drop6=Dropout(dropRate)(CNN_pool_1)
+	
+	CNN_conv_1 = Conv2D(128, (16, 16), activation='relu')(drop6) #1 x 1 x 64
+	drop7=Dropout(dropRate)(CNN_conv_1)
+	
+
 	#CNN_pool_2 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1) #7 x 7 x 64
-	flat1 = Flatten()(CNN_conv_1)
+	flat1 = Flatten()(drop7)
 	#dense1=Dense(1000, activation='relu')(flat1)
 	classifer=Dense(1175, activation='softmax')(flat1)
 	return decoded,classifer
@@ -73,13 +97,15 @@ def load_data(main_path,index_path,label_path):
 		indice=indice.replace(' ','')
 		#indice=indice.replace('r','',1)
 		index=indice.split(',')
+	#print (index)	
 	index=index[:-1]
-	indice=[]
-	for path in index:
-		if 'r' in path:
-			indice.append('r'+path)
-		else:
-			indice.append(path)  
+	indice=index 
+	# indice=[]
+	# for path in index:
+	# 	if 'r' in path:
+	# 		indice.append('r'+path)
+	# 	else:
+	# 		indice.append(path)  
 	#index=['r'+index[i] for i in np.arange(len(index)) if 'r' in index[i]]  ### name issue, for reference image, its named as r+name_in_file
 	#print (indice)
 	FileID_label=open(label_path,'r')
@@ -101,7 +127,8 @@ test_index_path='../data_augmentation/label_test_index.txt'
 test_label_path= '../data_augmentation/label_test.txt'
 imagePaths_list_test,label_test=load_data(mainPath_test,test_index_path,test_label_path)
 
-#print (imagePaths_list_test)
+
+#print ('train_list:',imagePaths_list_train)
 print (label_test)
 print ('label num:',len(list(set(label))))
 max_label=1175
@@ -126,8 +153,9 @@ print ('valid_label_num',valid_num)
 
 print ('img_num:',image_num)
 print ('train_num:',train_num)
-#print ('valid_num:',valid_num)
+# print ('valid_num:',valid_num)
 print ('test_num:',len(valid_label))
+# print('test_img_path_num',valid_imagePaths_list)
 
 
 
@@ -135,7 +163,7 @@ print ('test_num:',len(valid_label))
 train_ord=np.random.permutation(train_num)
 train_random_paths=[train_imagePaths_list[i] for i in train_ord] ### randomize training image paths
 train_random_label=[train_label[i] for i in train_ord]
-#print (train_random_label)
+#print (len(train_random_label))
 
 
 batch_size = 32
@@ -167,7 +195,7 @@ autoEncoder_CNN = Model(input_img, autoencoder_CNN(input_img)) ### create model
 #sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 autoEncoder_CNN.compile(loss=[AE_loss,Classifier_loss],optimizer = 'Adagrad',loss_weights=[0.5, 0.5])
 print ('metric_name:',autoEncoder_CNN.metrics_names)
-#autoEncoder_CNN.summary()
+autoEncoder_CNN.summary()
 		
 
 
@@ -209,7 +237,7 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 
 
 # checkpoint
-filepath="models/AE_CNN_model_weights.{epoch:02d}-{val_loss:.2f}.hdf5"
+filepath="models/AE_CNN_model_weights.{epoch:02d}-{val_dense_1_loss:.2f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_dense_1_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
 callbacks_list = [checkpoint]
 

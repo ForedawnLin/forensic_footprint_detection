@@ -12,7 +12,7 @@ fileID_test_index = fopen('label_test_index.txt', 'w'); % file to save the index
 fileID_train = fopen('label_train.txt', 'w'); % file to save the label for cropped image
 fileID_train_index = fopen('label_train_index.txt', 'w'); % file to save the index for cropped image
 height=0;
-width=0;
+width=0;    
 %compute the average size of the reference images
 for l =1:numel(S_r)
     F = fullfile(path_reference,S_r(l).name);

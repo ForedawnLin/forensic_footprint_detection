@@ -74,12 +74,12 @@ def load_data(main_path,index_path,label_path):
 		#indice=indice.replace('r','',1)
 		index=indice.split(',')
 	index=index[:-1]
-	indice=[]
-	for path in index:
-		if 'r' in path:
-			indice.append('r'+path)
-		else:
-			indice.append(path)  
+	indice=index
+	# for path in index:
+	# 	if 'r' in path:
+	# 		indice.append('r'+path)
+	# 	else:
+	# 		indice.append(path)  
 	#index=['r'+index[i] for i in np.arange(len(index)) if 'r' in index[i]]  ### name issue, for reference image, its named as r+name_in_file
 	#print (indice)
 	FileID_label=open(label_path,'r')
@@ -204,7 +204,7 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 
 #### Evaluation #######
 		
-autoEncoder_CNN.load_weights('models/AE_CNN_model_weights.41-1.53.hdf5')
+autoEncoder_CNN.load_weights('models/AE_CNN_model_weights.01-11.05.hdf5')
 
 
 ### test eval #######
