@@ -1,12 +1,12 @@
 path=pwd;
-path_reference=strcat(path,'/references')
-path =strcat(path,'/tracks_cropped');
+path_reference=strcat(path,'/../../FID-300/references')
+path =strcat(path,'/../../FID-300/tracks_cropped');
 
 N = 300; % set number of croped image
 offset=10; % set minimum offset of cropped image
 S_r = dir(fullfile(path_reference,'*.png'));
 S=dir(fullfile(path,'*.jpg'));
-load label_table;
+load ../../FID-300/label_table;
 fileID_test = fopen('label_test.txt', 'w'); % file to save the label for cropped image
 fileID_test_index = fopen('label_test_index.txt', 'w'); % file to save the index for cropped image
 fileID_train = fopen('label_train.txt', 'w'); % file to save the label for cropped image
@@ -27,10 +27,10 @@ PW=round(width/numel(S_r));
 for l =1:numel(S_r)
     F = fullfile(path_reference,S_r(l).name);
     I = imread(F); %read image
-    rotation_angle=[randperm(45,10)-22.5,randperm(45,10)+157.5];
+    rotation_angle=[randi(45,1,10)-22.5,randi(45,1,10)+157.5];
     for j=1:20
-        %set the name for cropped images
-        index=strcat(strcat(int2str(l),'_'),int2str(j));
+        %set the name for cropped imagescd
+        index=strcat(strcat(int2str(l),'_'),int2str(j));    
         index=strcat('r',index);
         patch_name=strcat(strcat(path, '/cropped/train/'), index);
 
@@ -48,13 +48,13 @@ for l =1:numel(S_r)
             switch method_image_change(i)
                 case 1
                     %scale 
-                    [H,W,~]= size(patch);
-                    H1=H*randi([7,15])/10;
-                    W1=W*randi([7,15])/10;
-                    patch = imresize(patch,[H1 W1]);
-                    a=floor(max(1,H1-H));
-                    b=floor(max(1,W1-W));
-                    patch = imcrop(patch,[randi([1 b],1,1),randi([1 a],1,1),W,H]);            
+%                     [H,W,~]= size(patch);
+%                     H1=H*randi([7,15])/10;
+%                     W1=W*randi([7,15])/10;
+%                     patch = imresize(patch,[H1 W1]);
+%                     a=floor(max(1,H1-H));
+%                     b=floor(max(1,W1-W));
+                    patch = patch;%imcrop(patch,[randi([1 b],1,1),randi([1 a],1,1),W,H]);            
                 case 2
                     % find the flip direction 
                     % 1: horizontal flip 
@@ -70,7 +70,7 @@ for l =1:numel(S_r)
                     % kernel with standard deviation specified by SIGMA. SIGMA can be a
                     % scalar or a 2-element vector with positive values. If sigma is a
                     % scalar, a square Gaussian kernel is used
-                    sigma=randi([12,18])/10.0;
+                    sigma=randi([12,18])/500.0;
                     patch=imgaussfilt(patch,sigma);
                 case 5
                     %rotation
@@ -107,9 +107,9 @@ for l =1:numel(S) % total number of images in the folder
         fprintf(fileID_test_index,' %i,', l); % write the index of cropped image
         imwrite(J,strcat(patch_name,'.jpg'));
     else
-        rotation_angle=[randperm(90,50)-45,randperm(90,50)+135];
+       rotation_angle=[randi(45,1,10)-22.5,randi(45,1,10)+157.5];
         
-        for j=1:100
+        for j=1:20
             %set the name for cropped images
             index=strcat(strcat(int2str(l),'_'),int2str(j));
 
@@ -130,13 +130,14 @@ for l =1:numel(S) % total number of images in the folder
                 switch method_image_change(i)
                     case 1
                         %scale
-                        [H,W,~]= size(patch);
-                        H1=H*randi([7,15])/10;
-                        W1=W*randi([7,15])/10;
-                        patch = imresize(patch,[H1 W1]);
-                        a=floor(max(1,H1-H));
-                        b=floor(max(1,W1-W));
-                        patch = imcrop(patch,[randi([1 b],1,1),randi([1 a],1,1),W,H]);               
+%                         [H,W,~]= size(patch);
+%                         H1=H*randi([7,15])/10;
+%                         W1=W*randi([7,15])/10;
+%                         patch = imresize(patch,[H1 W1]);
+%                         a=floor(max(1,H1-H));
+%                         b=floor(max(1,W1-W));
+%                         patch = imcrop(patch,[randi([1 b],1,1),randi([1 a],1,1),W,H]);               
+                          patch =patch;
                     case 2
                         % find the flip direction 
                         % 1: horizontal flip 
@@ -152,7 +153,8 @@ for l =1:numel(S) % total number of images in the folder
                         % kernel with standard deviation specified by SIGMA. SIGMA can be a
                         % scalar or a 2-element vector with positive values. If sigma is a
                         % scalar, a square Gaussian kernel is used
-                        sigma=randi([12,18])/10.0;
+                 
+                        sigma=randi([12,18])/500.0;
                         patch=imgaussfilt(patch,sigma);
                     case 5
                         %rotation

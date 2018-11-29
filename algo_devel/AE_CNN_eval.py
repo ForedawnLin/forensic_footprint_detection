@@ -1,7 +1,7 @@
 import numpy as np 
 #import system 
 import glob
-from keras.layers import Input,Conv2D,MaxPooling2D,UpSampling2D,Dense,Flatten
+from keras.layers import Input,Conv2D,MaxPooling2D,UpSampling2D,Dense,Flatten,BatchNormalization,Dropout
 from keras.models import Model
 from keras.optimizers import RMSprop
 from keras.preprocessing import image
@@ -16,24 +16,48 @@ import cv2
 
 
 def autoencoder_CNN(input_img):
-	conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(input_img) #28 x 28 x 32
-	pool1 = MaxPooling2D(pool_size=(2, 2))(conv1) #14 x 14 x 32
-	conv2 = Conv2D(64, (3, 3), activation='relu', padding='same')(pool1) #14 x 14 x 64
-	pool2 = MaxPooling2D(pool_size=(2, 2))(conv2) #7 x 7 x 64
-	conv3 = Conv2D(128, (3, 3), activation='relu', padding='same')(pool2) #7 x 7 x 128 (small and thick)
+	dropRate=0.5
+
+	conv1 = Conv2D(64, (5, 5), activation='relu', padding='same')(input_img) #28 x 28 x 32
+	norm1=BatchNormalization()(conv1)
+	pool1 = MaxPooling2D(pool_size=(2, 2))(norm1) #14 x 14 x 32
+	drop1=Dropout(dropRate)(pool1)
+	
+
+	conv2 = Conv2D(128, (3, 3), activation='relu', padding='same')(drop1) #14 x 14 x 64
+	norm2=BatchNormalization()(conv2)
+	pool2 = MaxPooling2D(pool_size=(2, 2))(norm2) #7 x 7 x 64
+	drop2=Dropout(dropRate)(pool2)
+	
+	conv3 = Conv2D(256, (3, 3), activation='relu', padding='same')(drop2) #7 x 7 x 128 (small and thick)
+	norm3=BatchNormalization()(conv3)
+	
+	
 
 	#decoder
-	conv4 = Conv2D(128, (3, 3), activation='relu', padding='same')(conv3) #7 x 7 x 128
-	up1 = UpSampling2D((2,2))(conv4) # 14 x 14 x 128
-	conv5 = Conv2D(64, (3, 3), activation='relu', padding='same')(up1) # 14 x 14 x 64
-	up2 = UpSampling2D((2,2))(conv5) # 28 x 28 x 64
-	decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(up2) # 28 x 28 x 1
+	drop3=Dropout(dropRate)(norm3)
+	conv4 = Conv2D(256, (3, 3), activation='relu', padding='same')(drop3) #7 x 7 x 128
+	norm4=BatchNormalization()(conv4)
+	up1 = UpSampling2D((2,2))(norm4) # 14 x 14 x 128
+	drop4=Dropout(dropRate)(up1)
+		
+	conv5 = Conv2D(128, (3, 3), activation='relu', padding='same')(drop4) # 14 x 14 x 64
+	norm5=BatchNormalization()(conv5)
+	up2 = UpSampling2D((2,2))(norm5) # 28 x 28 x 64
+	drop5=Dropout(dropRate)(up2)
+		
+	decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(drop5) # 28 x 28 x 1
 
 	# CNN classifier 
-	CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))(conv3) #16 x 16 x 128
-	CNN_conv_1 = Conv2D(128, (16, 16), activation='relu')(CNN_pool_1) #1 x 1 x 64
+	CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))(norm3) #16 x 16 x 128
+	drop6=Dropout(dropRate)(CNN_pool_1)
+	
+	CNN_conv_1 = Conv2D(256, (16, 16), activation='relu')(drop6) #1 x 1 x 64
+	drop7=Dropout(dropRate)(CNN_conv_1)
+	
+
 	#CNN_pool_2 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1) #7 x 7 x 64
-	flat1 = Flatten()(CNN_conv_1)
+	flat1 = Flatten()(drop7)
 	#dense1=Dense(1000, activation='relu')(flat1)
 	classifer=Dense(1175, activation='softmax')(flat1)
 	return decoded,classifer
@@ -204,7 +228,7 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 
 #### Evaluation #######
 		
-autoEncoder_CNN.load_weights('models/AE_CNN_model_weights.01-11.05.hdf5')
+autoEncoder_CNN.load_weights('models/AE_CNN_model_weights.05-15.88.hdf5')
 
 
 ### test eval #######
@@ -246,10 +270,10 @@ for i in (14,15):
 	img2check=i ### the image in test set to check 
 	img_orig= cv2.imread(valid_imagePaths_list[img2check])[:,:,1]
 	img_orig= cv2.resize(img_orig,(128,128))/255  ### -2 for maxpool and upsample commendation 
-	#img_pred=img_pred[img2check,:,:,0]
-	#img_pred=np.squeeze(img_pred)
+	img_pred_test=img_pred[img2check,:,:,0]
+	img_pred_test=np.squeeze(img_pred_test)
 	cv2.imshow('orig',img_orig)
-	#cv2.imshow('recons',img_pred)
+	cv2.imshow('recons',img_pred_test)
 	cv2.waitKey()
 
 for label in wrong_index:
