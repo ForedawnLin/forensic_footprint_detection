@@ -28,7 +28,7 @@ for l =1:numel(S_r)
     F = fullfile(path_reference,S_r(l).name);
     I = imread(F); %read image
     rotation_angle=[randi(45,1,10)-22.5,randi(45,1,10)+157.5];
-    for j=1:20
+    for j=1:50
         %set the name for cropped imagescd
         index=strcat(strcat(int2str(l),'_'),int2str(j));    
         index=strcat('r',index);
@@ -109,7 +109,7 @@ for l =1:numel(S) % total number of images in the folder
     else
        rotation_angle=[randi(45,1,10)-22.5,randi(45,1,10)+157.5];
         
-        for j=1:20
+        for j=1:50
             %set the name for cropped images
             index=strcat(strcat(int2str(l),'_'),int2str(j));
 
