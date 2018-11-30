@@ -27,7 +27,7 @@ PW=round(width/numel(S_r));
 for l =1:numel(S_r)
     F = fullfile(path_reference,S_r(l).name);
     I = imread(F); %read image
-    rotation_angle=[randperm(45,10)-22.5,randperm(45,10)+157.5];
+
     for j=1:20
         %set the name for cropped images
         index=strcat(strcat(int2str(l),'_'),int2str(j));
@@ -48,13 +48,7 @@ for l =1:numel(S_r)
             switch method_image_change(i)
                 case 1
                     %scale 
-                    [H,W,~]= size(patch);
-                    H1=H*randi([7,15])/10;
-                    W1=W*randi([7,15])/10;
-                    patch = imresize(patch,[H1 W1]);
-                    a=floor(max(1,H1-H));
-                    b=floor(max(1,W1-W));
-                    patch = imcrop(patch,[randi([1 b],1,1),randi([1 a],1,1),W,H]);            
+                    patch=patch;           
                 case 2
                     % find the flip direction 
                     % 1: horizontal flip 
@@ -74,31 +68,42 @@ for l =1:numel(S_r)
                     patch=imgaussfilt(patch,sigma);
                 case 5
                     %rotation
-                    patch=imrotate(patch,rotation_angle(j));
+                    angle_type=randi([0 1]);
+                    [h,w]=size(patch);
+                    width=max(h,w);
+                    patch=imresize(patch,[width,width]);
+                    theta=0;
+                    if angle_type==0
+                        theta=randi([-45,45]);                            
+                        patch=imrotate(patch,theta);
+                        theta=abs(theta);
+                    else
+                        theta=randi([135,225]);
+                        patch=imrotate(patch,theta);
+                        theta=abs(theta-180);
+                    end
+                    angle=theta/180*pi+pi/4;
+                    if angle>pi
+                        angle=angle-pi/2;
+                    end
+                    new_width=width/(sqrt(2)*sin(angle)); % width of cropped area
+                    [h,w]=size(patch); %size of rotated image
+                    patch = imcrop(patch,[h/2-new_width/2,w/2-new_width/2,new_width,new_width]);
             end
         end       
-        %patch=imrotate(patch,rotation_angle(j));
-        [H,W,~]= size(patch);
-        a=floor(max(1,H-PH));
-        b=floor(max(1,W-PW));
-        sh=randi([1 a],1,1);
-        sw=randi([1 b],1,1);
-        J = imcrop(patch,[sw,sh,PW,PH]); 
-        J = imresize(J,[PH PW]);
+        
+        J = imresize(patch,[PH PW]);
         fprintf(fileID_train,'%i,', l); % write the label of cropped image
         fprintf(fileID_train_index,' %s,', index); % write the index of cropped image
         imwrite(J,strcat(patch_name,'.jpg'));
     end
 end 
+test_data_index=randperm(300,60);
 for l =1:numel(S) % total number of images in the folder
     
     F = fullfile(path,S(l).name);
     I = imread(F); %read image
     
-    % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-
-    % preprocess the Image
-    test_data_index=randperm(300,60);
     %generate test images
     if ismember(l,test_data_index)
         J = imresize(I,[PH PW]);
@@ -107,8 +112,6 @@ for l =1:numel(S) % total number of images in the folder
         fprintf(fileID_test_index,' %i,', l); % write the index of cropped image
         imwrite(J,strcat(patch_name,'.jpg'));
     else
-        rotation_angle=[randperm(90,50)-45,randperm(90,50)+135];
-        
         for j=1:100
             %set the name for cropped images
             index=strcat(strcat(int2str(l),'_'),int2str(j));
@@ -130,13 +133,7 @@ for l =1:numel(S) % total number of images in the folder
                 switch method_image_change(i)
                     case 1
                         %scale
-                        [H,W,~]= size(patch);
-                        H1=H*randi([7,15])/10;
-                        W1=W*randi([7,15])/10;
-                        patch = imresize(patch,[H1 W1]);
-                        a=floor(max(1,H1-H));
-                        b=floor(max(1,W1-W));
-                        patch = imcrop(patch,[randi([1 b],1,1),randi([1 a],1,1),W,H]);               
+                        patch=patch;              
                     case 2
                         % find the flip direction 
                         % 1: horizontal flip 
@@ -156,16 +153,31 @@ for l =1:numel(S) % total number of images in the folder
                         patch=imgaussfilt(patch,sigma);
                     case 5
                         %rotation
-                        patch=imrotate(patch,rotation_angle(j));
+                        angle_type=randi([0 1]);
+                        [h,w]=size(patch);
+                        width=max(h,w);
+                        patch=imresize(patch,[width,width]);
+                        theta=0;
+                        if angle_type==0
+                            theta=randi([-45,45]);                            
+                            patch=imrotate(patch,theta);
+                            theta=abs(theta);
+                        else
+                            theta=randi([135,225]);
+                            patch=imrotate(patch,theta);
+                            theta=abs(theta-180);
+                        end
+                        angle=theta/180*pi+pi/4;
+                        if angle>pi
+                            angle=angle-pi/2;
+                        end
+                        new_width=width/(sqrt(2)*sin(angle)); % width of cropped area
+                        [h,w]=size(patch); %size of rotated image
+                        patch = imcrop(patch,[h/2-new_width/2,w/2-new_width/2,new_width,new_width]);
                 end
             end       
-            [H,W,~]= size(patch);
-            a=floor(max(1,H-PH));
-            b=floor(max(1,W-PW));
-            sh=randi([1 a],1,1);
-            sw=randi([1 b],1,1);
-            J = imcrop(patch,[sw,sh,PW,PH]); 
-            J = imresize(J,[PH PW]);
+            
+            J = imresize(patch,[PH PW]);
             %fprintf(fileID_train,'%s, %i\n',index, label_table(l,2)); % write the label of cropped image
             fprintf(fileID_train,'%i,', label_table(l,2)); % write the label of cropped image
             fprintf(fileID_train_index,' %s,', index); % write the index of cropped image
