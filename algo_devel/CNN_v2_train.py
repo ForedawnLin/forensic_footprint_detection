@@ -34,6 +34,23 @@ def autoencoder_CNN(input_img):
 	
 	
 
+	#decoder
+	# drop3=Dropout(dropRate)(conv3)
+	conv4 = Conv2D(256, (3, 3), activation='relu', padding='same')(conv3) #7 x 7 x 128
+	#norm4=BatchNormalization()(conv4)
+	up1 = UpSampling2D((2,2))(conv4) # 14 x 14 x 128
+	drop4=Dropout(dropRate)(up1)
+		
+	conv5 = Conv2D(128, (3, 3), activation='relu', padding='same')(drop4) # 14 x 14 x 64
+	#norm5=BatchNormalization()(conv5)
+	up2 = UpSampling2D((2,2))(conv5) # 28 x 28 x 64
+	drop5=Dropout(dropRate)(up2)
+		
+	decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(drop5) # 28 x 28 x 1
+
+
+
+
 	# CNN classifier 
 	CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))(conv3) #16 x 16 x 128
 	drop6=Dropout(dropRate)(CNN_pool_1)
@@ -56,7 +73,7 @@ def autoencoder_CNN(input_img):
 	#dense1=Dense(1000, activation='relu')(flat1)
 	# classifer=Dense(1175, activation='softmax')(flat1)
 	classifer=flat1
-	return classifer
+	return decoded,classifer
 
 
 
@@ -189,7 +206,7 @@ resize_h=128;
 input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 autoEncoder_CNN = Model(input_img, autoencoder_CNN(input_img)) ### create model 
 #sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-autoEncoder_CNN.compile(loss=[Classifier_loss],optimizer = 'sgd')
+autoEncoder_CNN.compile(loss=[AE_loss,Classifier_loss],optimizer = 'sgd',loss_weights=[0, 1])
 print ('metric_name:',autoEncoder_CNN.metrics_names)
 autoEncoder_CNN.summary()
 		
@@ -229,12 +246,12 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 		image_batch=np.array(image_batch)
 		label_batch=np.array(label_batch)
 		#print (np.shape(label_batch))
-		yield (image_batch, label_batch) ##(input, output)
+		yield (image_batch, [image_batch,label_batch]) ##(input, output)
 
 
 # # checkpoint
-filepath="models/AE_CNN_model_weights.{epoch:02d}-{val_loss:.2f}.hdf5"
-checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
+filepath="models/AE_CNN_model_weights.{epoch:02d}-{val_flatten_1_loss:.2f}.hdf5"
+checkpoint = ModelCheckpoint(filepath, monitor='val_flatten_1_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
 callbacks_list = [checkpoint]
 
 
