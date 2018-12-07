@@ -1,30 +1,35 @@
 PH = 240; % set size of croped image
 PW = 100; % set size of croped image
 path=pwd;
-path=strcat(path,'/../../FID-300/references')
-%path =strcat(path,'/references');
+path_reference=strcat(path,'/../../FID-300/references')
+path =strcat(path,'/../../FID-300/tracks_cropped');
+%path_reference =strcat(path,'/references');
+%path =strcat(path,'/tracks_cropped');
 N = 50; % set number of croped image
 
-S = dir(fullfile(path,'*.png'));
+S_r = dir(fullfile(path_reference,'*.png'));
+S=dir(fullfile(path,'*.jpg'));
 load ../../FID-300/label_table;
 %load label_table;
 fileID_train = fopen('label_train.txt', 'w'); % file to save the label for cropped image
 fileID_train_index = fopen('label_train_index.txt', 'w'); % file to save the index for cropped image
+fileID_test = fopen('label_test.txt', 'w'); % file to save the label for cropped image
+fileID_test_index = fopen('label_test_index.txt', 'w'); % file to save the index for cropped image
 %compute the average size of the reference images
 height=0;
 width=0;
-for l =1:numel(S)
-    F = fullfile(path,S(l).name);
+for l =1:numel(S_r)
+    F = fullfile(path_reference,S_r(l).name);
     I = imread(F); %read image
     [H,W,~]= size(I);
     height=height+H;
     width=width+W;
 end 
-h_ave=round(height/numel(S));
-w_ave=round(width/numel(S));
-for l =1:numel(S) % total number of images in the folder
+h_ave=round(height/numel(S_r));
+w_ave=round(width/numel(S_r));
+for l =1:numel(S_r) % total number of images in the folder
     
-    F = fullfile(path,S(l).name);
+    F = fullfile(path_reference,S_r(l).name);
     I = imread(F); %read image
     [H,W,~]= size(I);
 
@@ -111,5 +116,17 @@ for l =1:numel(S) % total number of images in the folder
 
 end
 
+for l =1:numel(S) % total number of images in the folder    
+    F = fullfile(path,S(l).name);
+    I = imread(F); %read image
+    J = imresize(I,[h_ave w_ave]);
+    test_name=strcat(strcat(path, '/cropped/test/'), int2str(l));
+    fprintf(fileID_test,' %i,', label_table(l,2)); % write the label of cropped image
+    fprintf(fileID_test_index,' %i,', l); % write the index of cropped image
+    imwrite(J,strcat(test_name,'.jpg'));
+end
+
 fclose(fileID_train);
 fclose(fileID_train_index);
+fclose(fileID_test);
+fclose(fileID_test_index);
