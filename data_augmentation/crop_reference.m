@@ -2,6 +2,7 @@ PH = 240; % set size of croped image
 PW = 100; % set size of croped image
 path=pwd;
 path_reference=strcat(path,'/../../FID-300/references')
+path=path_reference
 %path =strcat(path,'/references');
 N = 50; % set number of croped image
 
