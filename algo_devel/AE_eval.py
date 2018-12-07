@@ -21,7 +21,7 @@ def autoencoder_CNN(input_img):
 	#drop_input=Dropout(dropRate)(input_img)
 	conv1 = Conv2D(128, (3, 3), activation='relu')(input_img) #28 x 28 x 32
 	#norm1=BatchNormalization()(conv1)
-	pool1 = MaxPooling2D(pool_size=(4, 4))(conv1) #14 x 14 x 32
+	pool1 = MaxPooling2D(pool_size=(2, 2))(conv1) #14 x 14 x 32
 	#drop1=Dropout(dropRate)(pool1)
 	
 
@@ -31,24 +31,57 @@ def autoencoder_CNN(input_img):
 	#drop2=Dropout(dropRate)(pool2)
 	
 	conv3 = Conv2D(512, (3, 3), activation='relu')(pool2) #7 x 7 x 128 (small and thick)
-	#norm3=BatchNormalization()(conv3)
-	
+	pool3 = MaxPooling2D(pool_size=(2, 2))(conv3) #7 x 7 x 64
+	# #norm3=BatchNormalization()(conv3)
+
+	conv4 = Conv2D(16, (3, 3), activation='relu')(pool3) #7 x 7 x 128 (small and thick)
+	# pool4 = MaxPooling2D(pool_size=(2, 2))(conv4) #7 x 7 x 64
+		
+	# conv5 = Conv2D(2048, (2, 2), activation='relu')(pool4) #7 x 7 x 128 (small and thick)
+	# pool4 = MaxPooling2D(pool_size=(2, 2))(conv4) #7 x 7 x 64
 	
 
-	#decoder
-	# drop3=Dropout(dropRate)(norm3)
-	conv4 = Deconvolution2D(512, (3, 3), activation='relu',output_shape=(None,1,31,31))(conv3) #7 x 7 x 128
-	#norm4=BatchNormalization()(conv4)
-	up1 = UpSampling2D((2,2))(conv4) # 14 x 14 x 128
-	#drop4=Dropout(dropRate)(up1)
-		
-	conv5 = Deconvolution2D(256, (3, 3), activation='relu',output_shape=(None,1,64,64))(up1) # 14 x 14 x 64
-	#norm5=BatchNormalization()(conv5)
-	up2 = UpSampling2D((4,4))(conv5) # 28 x 28 x 64
-	#drop5=Dropout(dropRate)(up2)
-		
-	decoded = Deconvolution2D(1, (3, 3), activation='sigmoid',output_shape=(None,1,130,130))(up2) # 28 x 28 x 1
+	# #decoder
+
+	de_conv1 = Deconvolution2D(512, (3, 3), activation='relu',output_shape=(None,1,14,14))(conv4) #7 x 7 x 128
 	
+	up1 = UpSampling2D((2,2))(de_conv1)
+	de_conv2 = Deconvolution2D(256, (3, 3), activation='relu',output_shape=(None,1,30,30))(up1) #7 x 7 x 128
+	
+
+	up2 = UpSampling2D((2,2))(de_conv2)
+	de_conv3 = Deconvolution2D(128, (3, 3), activation='relu',output_shape=(None,1,62,62))(up2) #7 x 7 x 128
+		
+
+	up3 = UpSampling2D((2,2))(de_conv3)
+	de_conv4 = Deconvolution2D(1, (3, 3), activation='relu',output_shape=(None,1,126,126))(up3) #7 x 7 x 128
+	
+	# #norm4=BatchNormalization()(conv4)
+	# up1 = UpSampling2D((2,2))(conv4) # 14 x 14 x 128
+	# #drop4=Dropout(dropRate)(up1)
+		
+	# conv5 = Deconvolution2D(256, (3, 3), activation='relu',output_shape=(None,1,64,64))(up1) # 14 x 14 x 64
+	# #norm5=BatchNormalization()(conv5)
+	# up2 = UpSampling2D((4,4))(conv5) # 28 x 28 x 64
+	# #drop5=Dropout(dropRate)(up2)
+		
+	#decoded = Deconvolution2D(1, (3, 3), activation='sigmoid',output_shape=(None,1,130,130))(up2) # 28 x 28 x 1
+	decoded =de_conv4
+
+
+	# CNN classifier 
+	# CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))() #16 x 16 x 128
+	# # drop6=Dropout(dropRate)(CNN_pool_1)
+	
+	# CNN_conv_1 = Conv2D(512, (2, 2), activation='relu')(pool2) #1 x 1 x 64
+	# # drop7=Dropout(dropRate)(CNN_conv_1)
+	# CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1)
+
+
+	#CNN_pool_2 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1) #7 x 7 x 64
+	# flat1 = Flatten()(conv4)
+	# dense1=Dense(2048, activation='relu')(flat1)
+	# classifer=Dense(1175, activation='softmax')(dense1)
 	return decoded
 
 
@@ -104,7 +137,7 @@ def load_data(main_path,index_path,label_path):
 	label=[int(label[i])-1 for i in np.arange(len(label))]  ## -1 b/c zero index 
 	return imagePaths_list,label 
 
-mainPath_train='../../FID-300/tracks_cropped/cropped/train/'  ## main path of the pictures 
+mainPath_train='../../FID-300/tracks_cropped/cropped/train_noise/'  ## main path of the pictures 
 train_index_path='../data_augmentation/label_train_index.txt' 
 train_label_path= '../data_augmentation/label_train.txt'
 imagePaths_list_train,label=load_data(mainPath_train,train_index_path,train_label_path)
@@ -121,35 +154,35 @@ print ('label num:',len(list(set(label))))
 
 
 
-def process_label(test_label_set,train_label_set):
-	### the function process train label and test labe so that the labels are from 1:130 
-	### new labels are 1 based 
-	dic_classes={} 
-	i=0
-	test_label_set_new=[]
-	reference_table={} ### look up table for new labels 
-	for classes in set(train_label_set):
-		reference_table[classes]=i
-		i+=1
-	#print ('reference_table',reference_table) 
-	# for label in train_label_set:
-	# 	try:
-	# 		a=1
-	# 		#print (reference_table[label]) 
-	# 	except:
-	# 		a=1 
-	# 		#print ('key error',label)
+# def process_label(test_label_set,train_label_set):
+# 	### the function process train label and test labe so that the labels are from 1:130 
+# 	### new labels are 1 based 
+# 	dic_classes={} 
+# 	i=0
+# 	test_label_set_new=[]
+# 	reference_table={} ### look up table for new labels 
+# 	for classes in set(train_label_set):
+# 		reference_table[classes]=i
+# 		i+=1
+# 	#print ('reference_table',reference_table) 
+# 	# for label in train_label_set:
+# 	# 	try:
+# 	# 		a=1
+# 	# 		#print (reference_table[label]) 
+# 	# 	except:
+# 	# 		a=1 
+# 	# 		#print ('key error',label)
 
-	train_label_set_new=[reference_table[label] for label in train_label_set]
-	test_label_set_new=[reference_table[label] for label in test_label_set]
+# 	train_label_set_new=[reference_table[label] for label in train_label_set]
+# 	test_label_set_new=[reference_table[label] for label in test_label_set]
 
-	return train_label_set_new,test_label_set_new,reference_table 	
+# 	return train_label_set_new,test_label_set_new,reference_table 	
 
-label,label_test,reference_table=process_label(label_test,label)
+# label,label_test,reference_table=process_label(label_test,label)
 
 
 
-max_label=130
+max_label=1175
 
 image_num=np.size(imagePaths_list_train) ### total image numbers 
 
@@ -249,7 +282,7 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 
 #### Evaluation #######
 		
-autoEncoder_CNN.load_weights('models/AE_CNN_model_v5_130_weights.52-0.02.hdf5')
+autoEncoder_CNN.load_weights('models/AE_CNN_model_v5_refOnly_weights.240-0.02.hdf5')
 
 
 ### test eval #######

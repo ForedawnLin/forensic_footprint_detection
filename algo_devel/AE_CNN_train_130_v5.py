@@ -80,8 +80,8 @@ def autoencoder_CNN(input_img):
 
 	#CNN_pool_2 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1) #7 x 7 x 64
 	flat1 = Flatten()(conv4)
-	dense1=Dense(1024, activation='relu')(flat1)
-	classifer=Dense(130, activation='softmax')(dense1)
+	dense1=Dense(2048, activation='relu')(flat1)
+	classifer=Dense(1175, activation='softmax')(dense1)
 	return decoded,classifer
 
 
@@ -142,6 +142,7 @@ def load_data_test(main_path,index_path,label_path):
 #################################################################################### 
 
 def load_data_train(main_path,index_path,label_path):
+	### use reference img only ###
 	pic_fmt='.jpg'  ## picture format 
 	imagePaths_list=[]  ## init image paths
 	FileID_index=open(index_path,'r')
@@ -183,7 +184,7 @@ def load_data_train(main_path,index_path,label_path):
 mainPath_train='../../FID-300/tracks_cropped/cropped/train/'  ## main path of the pictures 
 train_index_path='../data_augmentation/label_train_index.txt' 
 train_label_path= '../data_augmentation/label_train.txt'
-imagePaths_list_train,label=load_data_train(mainPath_train,train_index_path,train_label_path)
+imagePaths_list_train,label=load_data_test(mainPath_train,train_index_path,train_label_path)
 
 
 mainPath_test='../../FID-300/tracks_cropped/cropped/test/'  ## main path of the pictures 
@@ -198,34 +199,34 @@ print ('label num:',len(list(set(label))))
 # print ('train image label',len(label))
 
 
-def process_label(test_label_set,train_label_set):
-	### the function process train label and test labe so that the labels are from 1:130 
-	### new labels are 1 based 
-	dic_classes={} 
-	i=0
-	test_label_set_new=[]
-	reference_table={} ### look up table for new labels 
-	for classes in set(train_label_set):
-		reference_table[classes]=i
-		i+=1
-	#print ('reference_table',reference_table) 
-	# for label in train_label_set:
-	# 	try:
-	# 		a=1
-	# 		#print (reference_table[label]) 
-	# 	except:
-	# 		a=1 
-	# 		#print ('key error',label)
+# def process_label(test_label_set,train_label_set):
+# 	### the function process train label and test labe so that the labels are from 1:130 
+# 	### new labels are 1 based 
+# 	dic_classes={} 
+# 	i=0
+# 	test_label_set_new=[]
+# 	reference_table={} ### look up table for new labels 
+# 	for classes in set(train_label_set):
+# 		reference_table[classes]=i
+# 		i+=1
+# 	#print ('reference_table',reference_table) 
+# 	# for label in train_label_set:
+# 	# 	try:
+# 	# 		a=1
+# 	# 		#print (reference_table[label]) 
+# 	# 	except:
+# 	# 		a=1 
+# 	# 		#print ('key error',label)
 
-	train_label_set_new=[reference_table[label] for label in train_label_set]
-	test_label_set_new=[reference_table[label] for label in test_label_set]
+# 	train_label_set_new=[reference_table[label] for label in train_label_set]
+# 	test_label_set_new=[reference_table[label] for label in test_label_set]
 
-	return train_label_set_new,test_label_set_new,reference_table 	
+# 	return train_label_set_new,test_label_set_new,reference_table 	
 
-label,label_test,reference_table=process_label(label_test,label)
+# label,label_test,reference_table=process_label(label_test,label)
 
 
-max_label=130
+max_label=1175
 
 image_num=np.size(imagePaths_list_train) ### total image numbers 
 
@@ -258,6 +259,11 @@ train_ord=np.random.permutation(train_num)
 train_random_paths=[train_imagePaths_list[i] for i in train_ord] ### randomize training image paths
 train_random_label=[train_label[i] for i in train_ord]
 #print (len(train_random_label))
+
+a=train_random_paths[0].split('/')
+
+print ('train_path',a[0]+'/'+a[1]+'/'+a[2]+'/'+a[3]+'/'+a[4]+'/'+a[5]+'/'+a[6])
+
 
 
 batch_size = 32
@@ -305,6 +311,7 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 	i=0 
 	while True:
 		image_batch=[] ### batched image 
+		image_noNoise_batch=[] ### no noise 
 		label_batch=[] ### asscociated batched labels 
 		for index in np.arange(batch_size):
 			if i==total_image_num:
@@ -319,6 +326,17 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 			img= cv2.resize(img,(w,h))/255  ### -2 for maxpool and upsample commendation 
 			img= np.reshape(img,(np.shape(img)[0],np.shape(img)[1],1)) ## instead of m*n, reshape img to 1*m*n*1 for keras input 
 			image_batch.append(img)
+			
+			img_path_list=img_path.split('/')
+			img_path_no_noise=img_path_list[0]+'/'+img_path_list[1]+'/'+img_path_list[2]+'/'+img_path_list[3]+'/'+img_path_list[4]+'/'+'train_noise'+'/'+img_path_list[6]
+			#print (img_path_no_noise)
+			img_noNoise= cv2.imread(img_path_no_noise)[:,:,1]
+			# print ('img',np.shape(img))
+			img_noNoise= cv2.resize(img_noNoise,(w,h))/255  ### -2 for maxpool and upsample commendation 
+			img_noNoise= np.reshape(img_noNoise,(np.shape(img_noNoise)[0],np.shape(img_noNoise)[1],1)) ## instead of m*n, reshape img to 1*m*n*1 for keras input 
+			image_noNoise_batch.append(img_noNoise)
+
+
 			label_vector= np.zeros(max_label)
 			# print (np.shape(label_vector))
 			label_vector[label]=1
@@ -326,7 +344,7 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 		image_batch=np.array(image_batch)
 		label_batch=np.array(label_batch)
 		#print (np.shape(label_batch))
-		yield (image_batch, [image_batch,label_batch]) ##(input, output)
+		yield (image_batch, [image_noNoise_batch,label_batch]) ##(input, output)
 
 
 # # checkpoint
