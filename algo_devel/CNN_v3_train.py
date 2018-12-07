@@ -243,18 +243,18 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 
 
 ### load model 
-autoEncoder_CNN.load_weights('models/AE_CNN_v3_model_weights.27-6.40.hdf5')
+# autoEncoder_CNN.load_weights('models/AE_CNN_v3_model_weights.27-6.40.hdf5')
 
-# checkpoint
-filepath="models/AE_CNN_v3_model_weights_conti.{epoch:02d}-{val_loss:.2f}.hdf5"
-checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
-callbacks_list = [checkpoint]
-
-
-autoEncoder_CNN.fit_generator(generator=generate_data(train_random_paths,train_random_label,train_num,batch_size,resize_w,resize_h,max_label),
-                     steps_per_epoch=iters_batch, epochs=epochs,validation_data=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label),validation_steps=valid_iters_batch,callbacks=callbacks_list,shuffle=True)
+# # checkpoint
+# filepath="models/AE_CNN_v3_model_weights_conti.{epoch:02d}-{val_loss:.2f}.hdf5"
+# checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
+# callbacks_list = [checkpoint]
 
 
-autoEncoder_CNN.save('models/AE_CNN_v3_model.h5')
-autoEncoder_CNN.save_weights("models/AE_CNN_v3_model_weights.h5")
+# autoEncoder_CNN.fit_generator (generator=generate_data(train_random_paths,train_random_label,train_num,batch_size,resize_w,resize_h,max_label),
+#                      steps_per_epoch=iters_batch, epochs=epochs,validation_data=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label),validation_steps=valid_iters_batch,callbacks=callbacks_list,shuffle=True)
+
+
+# autoEncoder_CNN.save('models/AE_CNN_v3_model.h5')
+# autoEncoder_CNN.save_weights("models/AE_CNN_v3_model_weights.h5")
 
