@@ -15,6 +15,7 @@ from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 
 from sklearn import preprocessing
+from skimage.transform import resize
 
 # from keras.layers import Input
 
@@ -33,14 +34,14 @@ train_index_path='../data_augmentation/label_train_index.txt'
 train_label_path= '../data_augmentation/label_train.txt'
 FileID_train_index=open(train_index_path,'r')
 for indice in FileID_train_index:
-	indice=indice.replace(' ','')
-	indice=indice.replace('r','') # remove r which is inconsistent with image names
-	index=indice.split(',')
+  indice=indice.replace(' ','')
+  indice=indice.replace('r','') # remove r which is inconsistent with image names
+  index=indice.split(',')
 index=index[:-1]
 # print (index)
 FileID_train_label=open(train_label_path,'r')
 for labels in FileID_train_label:
-	label=labels.split(',')
+  label=labels.split(',')
 label=label[:-1]
 #print (label)
 imagePaths_list=[mainPath+index[i]+pic_fmt for i in np.arange(len(index))]
@@ -81,11 +82,13 @@ n_imgs=batch_size ### input layer image number
 # img = cv2.imread(imagePaths_list[0])[:,:,1]
 # print('path', imagePaths_list[0])
 # img = cv2.imread(imagePaths_list[1], 0)
-img = cv2.imread(train_imagePaths_list[0], 0)
+img_origin = cv2.imread(train_imagePaths_list[0], 0)
+img = resize(img_origin, (150, 150), anti_aliasing=True)
+
 # cv2.imshow('image',img)
 img_h = np.shape(img)[0] ### input layer image height 
 img_w = np.shape(img)[1] ### input layer image width
-img_channel=1 ### input layer image width, gray image 	
+img_channel=1 ### input layer image width, gray image   
 print ('imag_shape',train_imagePaths_list[30000], img_h,img_w,img_channel)
 
 img_reshape = img.reshape( (img_h*img_w, 1) )
@@ -96,23 +99,24 @@ print ('imag_reshape',np.shape(img_reshape)[0],np.shape(img_reshape)[1])
 #input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 
 # TODO fix data error: training img is less than 30000
-train_num = 500
+train_num = 10000
 #imgs = []
 #imgs = np.array(imgs)
 imgs = np.zeros( (train_num, img_h*img_w) )  
 for i in range(0, train_num):
-	img = cv2.imread(train_imagePaths_list[i], 0)
-	img_h = np.shape(img)[0] ### input layer image height 
-	img_w = np.shape(img)[1] ### input layer image width
-	img_channel=1 ### input layer image width, gray image 	
-	print ('imag_shape',i, img_h,img_w,img_channel)
+  img_origin = cv2.imread(train_imagePaths_list[i], 0)
+  img = resize(img_origin, (150, 150), anti_aliasing=True)
+  img_h = np.shape(img)[0] ### input layer image height 
+  img_w = np.shape(img)[1] ### input layer image width
+  img_channel=1 ### input layer image width, gray image   
+  print ('imag_shape',i, img_h,img_w,img_channel)
 
-	img_reshape = img.reshape( (img_h*img_w, 1) )[0]
-	# print ('imag_reshape',np.shape(img_reshape)[0],np.shape(img_reshape)[1])
-	# imgs.append(img_reshape)
-	# imgs = np.append(imgs, img_reshape, axis = 0)
-	imgs[i] = img_reshape
-	print ('imgs_shape after', imgs.shape)
+  img_reshape = img.reshape( (img_h*img_w, 1) )[0]
+  # print ('imag_reshape',np.shape(img_reshape)[0],np.shape(img_reshape)[1])
+  # imgs.append(img_reshape)
+  # imgs = np.append(imgs, img_reshape, axis = 0)
+  imgs[i] = img_reshape
+  print ('imgs_shape after', imgs.shape)
 
 # Display progress logs on stdout
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
@@ -150,7 +154,7 @@ y = train_label[0:train_num]
 # n_classes = target_names.shape[0]
 # target_names = train_label[0:12]
 # n_classes = 1175 # number of reference images is the number of classes
-n_classes = 5 # number of reference images is the number of classes
+n_classes = 100 # number of reference images is the number of classes
 
 print("Total dataset size:")
 print("n_samples: %d" % n_samples)
