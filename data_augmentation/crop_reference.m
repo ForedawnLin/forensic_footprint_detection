@@ -20,8 +20,8 @@ for l =1:numel(S)
     height=height+H;
     width=width+W;
 end 
-height=round(height/numel(S));
-width=round(width/numel(S));
+h_ave=round(height/numel(S));
+w_ave=round(width/numel(S));
 for l =1:numel(S) % total number of images in the folder
     
     F = fullfile(path,S(l).name);
@@ -86,7 +86,7 @@ for l =1:numel(S) % total number of images in the folder
             end
         end       
 
-        J = imresize(patch,[height width]);
+        J = imresize(patch,[h_ave w_ave]);
         fprintf(fileID_train,'%i,', l); % write the label of cropped image
         fprintf(fileID_train_index,' %s,', index); % write the index of cropped image
         imwrite(J,strcat(patch_name,'.jpg'));
