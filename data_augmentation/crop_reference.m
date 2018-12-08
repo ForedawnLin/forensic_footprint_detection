@@ -10,11 +10,9 @@ path =strcat(path,'/../../FID-300/tracks_cropped');
 path_reference =strcat(path,'/../../FID-300/references');
 % path =strcat(path,'/tracks_cropped');
 
-<<<<<<< HEAD
-N = 20; % set number okjf croped image
-=======
+
 N = 100; % set number of croped image
->>>>>>> cb44c965607b13ee4cb89c13a2ebedcc459eb2ff
+
 
 S_r = dir(fullfile(path_reference,'*.png'));
 S=dir(fullfile(path,'*.jpg'));
