@@ -245,7 +245,7 @@ feature_X=Encoder.predict(data_X, batch_size=None, verbose=0, steps=None)
 #print ("train_feature_shape:",np.shape(feature_X))
 # print ("label_X_shape:",np.shape(label_X))
 
-#feature_X=feature_X[:,:,:,8:10]
+feature_X=feature_X[:,:,:,5:15]
 print ("train_feature_shape:",np.shape(feature_X))
 
 X=[feature_X[i,:,:,:].flatten('C') for i in np.arange(np.shape(feature_X)[0])]
@@ -258,7 +258,7 @@ data_Y,label_Y=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_b
 feature_Y=Encoder.predict(data_Y, batch_size=None, verbose=0, steps=None)
 
 
-#feature_Y=feature_Y[:,:,:,8:10]
+feature_Y=feature_Y[:,:,:,5:15]
 print ("train_feature_shape:",np.shape(feature_Y))
 
 Y=[feature_Y[i,:,:,:].flatten('C') for i in np.arange(np.shape(feature_Y)[0])]
@@ -280,10 +280,21 @@ print('prediction')
 print (prediction)
 
 
-accuracy=np.true_divide(np.sum(label_Y==prediction),len(label_Y)) 
-print ('accuracy:',accuracy)
+top1_accuracy=np.true_divide(np.sum(label_Y==prediction),len(label_Y)) 
+print ('top 1 accuracy:',top1_accuracy)
 
-
+class_probs=KNN.predict_proba(Y)
+top5_right=[]
+i=0 
+for class_prob in class_probs: 
+	top5_prob_label=sorted(range(len(class_prob)), key=lambda i: a[i])[-5:] 
+	if prediction[i] in top5_prob_label: 
+		top5_right.append(1)
+	else:
+		top5_right.append(0)
+	i+=1
+top5_accuracy=np.true_divide(np.sum(top5_right),len(label_Y)) 
+print ('top 5 accuracy:',top5_accuracy)
 
 
 
