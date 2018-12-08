@@ -239,8 +239,8 @@ img_w=np.shape(img)[1] ### input layer image width
 img_channel=1 ### input layer image width, gray image 	
 print ('imag_shape',img_h,img_w,img_channel)
 
-resize_w=130; ### resize image to before feeding into network 
-resize_h=130;
+resize_w=134; ### resize image to before feeding into network 
+resize_h=134;
 input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 autoEncoder_CNN = Model(input_img, autoencoder_CNN(input_img)) ### create model 
 #sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
@@ -282,7 +282,7 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 
 #### Evaluation #######
 		
-autoEncoder_CNN.load_weights('models/AE_CNN_model_v5_refOnly_weights.240-0.02.hdf5')
+autoEncoder_CNN.load_weights('models/results/AE_CNN_model_v5_refOnly_weights.343-0.02.hdf5')
 
 
 ### test eval #######
