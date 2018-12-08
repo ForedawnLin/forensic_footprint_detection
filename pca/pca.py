@@ -15,18 +15,11 @@ from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 
 from sklearn import preprocessing
-from skimage.transform import resize
-
-# from keras.layers import Input
-
-#import skimage
-#from skimage import io
+# from skimage.transform import resize
 
 # print(__doc__)
 
 ### load data ###
-# mainPath='../../FID-300/tracks_cropped/cropped/train/'  ## main path of the pictures 
-# TODO: change the path to augumented figures
 mainPath='../../FID-300/tracks_cropped/cropped/train/'  ## main path of the pictures 
 pic_fmt='.jpg'  ## picture format 
 imagePaths_list=[]  ## init image paths
@@ -68,7 +61,6 @@ valid_label=label[train_num:image_num]
 train_ord=np.random.permutation(train_num)
 train_random_paths=[train_imagePaths_list[i] for i in train_ord] ### randomize training image paths
 train_random_label=[train_label[i] for i in train_ord]
-#print (train_random_label)
 
 batch_size = 24
 iters_batch = int(np.floor(np.true_divide(train_num,batch_size)))
@@ -79,24 +71,22 @@ valid_batch_size = 50
 valid_iters_batch = int(np.floor(np.true_divide(valid_num,valid_batch_size)))
 
 n_imgs=batch_size ### input layer image number 
-# img = cv2.imread(imagePaths_list[0])[:,:,1]
-# print('path', imagePaths_list[0])
-# img = cv2.imread(imagePaths_list[1], 0)
 img_origin = cv2.imread(train_imagePaths_list[0], 0)
-img = resize(img_origin, (150, 150), anti_aliasing=True)
+# img = resize(img_origin, (150, 150), anti_aliasing=True)
+img = cv2.resize(img_origin, (150, 150)) 
 
 # cv2.imshow('image',img)
 img_h = np.shape(img)[0] ### input layer image height 
 img_w = np.shape(img)[1] ### input layer image width
 img_channel=1 ### input layer image width, gray image   
-print ('imag_shape',train_imagePaths_list[30000], img_h,img_w,img_channel)
+print ('imag_shape',train_imagePaths_list[0], img_h,img_w,img_channel)
 
 img_reshape = img.reshape( (img_h*img_w, 1) )
 print ('imag_reshape',np.shape(img_reshape)[0],np.shape(img_reshape)[1])
 
 #resize_w=128; ### resize image to before feeding into network 
 #resize_h=128;
-#input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
+# input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 
 # TODO fix data error: training img is less than 30000
 train_num = 10000
@@ -105,7 +95,9 @@ train_num = 10000
 imgs = np.zeros( (train_num, img_h*img_w) )  
 for i in range(0, train_num):
   img_origin = cv2.imread(train_imagePaths_list[i], 0)
-  img = resize(img_origin, (150, 150), anti_aliasing=True)
+  # img = resize(img_origin, (150, 150), anti_aliasing=True)
+  img = cv2.resize(img_origin, (150, 150))
+
   img_h = np.shape(img)[0] ### input layer image height 
   img_w = np.shape(img)[1] ### input layer image width
   img_channel=1 ### input layer image width, gray image   
