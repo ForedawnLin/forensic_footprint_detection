@@ -19,22 +19,22 @@ def autoencoder_CNN(input_img):
 	dropRate=0.5
 
 	#drop_input=Dropout(dropRate)(input_img)
-	conv1 = Conv2D(128, (3, 3), activation='relu')(input_img) #28 x 28 x 32
+	conv1 = Conv2D(256, (3, 3), activation='relu',padding='same')(input_img) #28 x 28 x 32
 	#norm1=BatchNormalization()(conv1)
 	pool1 = MaxPooling2D(pool_size=(2, 2))(conv1) #14 x 14 x 32
 	#drop1=Dropout(dropRate)(pool1)
 	
 
-	conv2 = Conv2D(256, (3, 3), activation='relu')(pool1) #14 x 14 x 64
+	conv2 = Conv2D(512, (3, 3), activation='relu',padding='same')(pool1) #14 x 14 x 64
 	#norm2=BatchNormalization()(conv2)
 	pool2 = MaxPooling2D(pool_size=(2, 2))(conv2) #7 x 7 x 64
 	#drop2=Dropout(dropRate)(pool2)
 	
-	conv3 = Conv2D(512, (3, 3), activation='relu')(pool2) #7 x 7 x 128 (small and thick)
-	pool3 = MaxPooling2D(pool_size=(2, 2))(conv3) #7 x 7 x 64
-	# #norm3=BatchNormalization()(conv3)
+	conv3 = Conv2D(16, (3, 3), activation='relu',padding='same')(pool2) #7 x 7 x 128 (small and thick)
+	# pool3 = MaxPooling2D(pool_size=(2, 2))(conv3) #7 x 7 x 64
+	# # #norm3=BatchNormalization()(conv3)
 
-	conv4 = Conv2D(16, (3, 3), activation='relu')(pool3) #7 x 7 x 128 (small and thick)
+	# conv4 = Conv2D(16, (3, 3), activation='relu')(pool3) #7 x 7 x 128 (small and thick)
 	# pool4 = MaxPooling2D(pool_size=(2, 2))(conv4) #7 x 7 x 64
 		
 	# conv5 = Conv2D(2048, (2, 2), activation='relu')(pool4) #7 x 7 x 128 (small and thick)
@@ -43,18 +43,18 @@ def autoencoder_CNN(input_img):
 
 	# #decoder
 
-	de_conv1 = Deconvolution2D(512, (3, 3), activation='relu',output_shape=(None,1,14,14))(conv4) #7 x 7 x 128
+	# de_conv1 = Deconvolution2D(512, (3, 3), activation='relu',output_shape=(None,1,14,14))(conv4) #7 x 7 x 128
 	
-	up1 = UpSampling2D((2,2))(de_conv1)
-	de_conv2 = Deconvolution2D(256, (3, 3), activation='relu',output_shape=(None,1,30,30))(up1) #7 x 7 x 128
+	# up1 = UpSampling2D((2,2))(de_conv1)
+	de_conv2 = Deconvolution2D(512, (3, 3), activation='relu',output_shape=(None,1,32,32),padding='same')(conv3) #7 x 7 x 128
 	
 
 	up2 = UpSampling2D((2,2))(de_conv2)
-	de_conv3 = Deconvolution2D(128, (3, 3), activation='relu',output_shape=(None,1,62,62))(up2) #7 x 7 x 128
+	de_conv3 = Deconvolution2D(256, (3, 3), activation='relu',output_shape=(None,1,64,64),padding='same')(up2) #7 x 7 x 128
 		
 
 	up3 = UpSampling2D((2,2))(de_conv3)
-	de_conv4 = Deconvolution2D(1, (3, 3), activation='relu',output_shape=(None,1,126,126))(up3) #7 x 7 x 128
+	de_conv4 = Deconvolution2D(1, (3, 3), activation='relu',output_shape=(None,1,128,128),padding='same')(up3) #7 x 7 x 128
 	
 	# #norm4=BatchNormalization()(conv4)
 	# up1 = UpSampling2D((2,2))(conv4) # 14 x 14 x 128
@@ -197,11 +197,11 @@ train_random_label=[train_label[i] for i in train_ord]
 
 batch_size = 32
 iters_batch = int(np.floor(np.true_divide(train_num,batch_size)))
-epochs = 400
+epochs = 47
 
 #n_valid_check=50 ### number of validation images for check at each iteration  
 #valid_batch_size = 50
-valid_batch_size = len(label_test)
+valid_batch_size = len(label_test)/10
 valid_iters_batch = int(np.floor(np.true_divide(valid_num,valid_batch_size)))
 
 
@@ -217,8 +217,8 @@ img_w=np.shape(img)[1] ### input layer image width
 img_channel=1 ### input layer image width, gray image 	
 print ('imag_shape',img_h,img_w,img_channel)
 
-resize_w=134; ### resize image to before feeding into network 
-resize_h=134;
+resize_w=128; ### resize image to before feeding into network 
+resize_h=128;
 input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 autoEncoder_CNN = Model(input_img, autoencoder_CNN(input_img)) ### create model 
 #sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
@@ -298,11 +298,11 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 
 
 ### load model ###
-autoEncoder_CNN.load_weights('models/results/AE_CNN_model_v5_refOnly_weights.hdf5')
+autoEncoder_CNN.load_weights('models/results/AE_refOnly_v2_weights.03-0.01.hdf5')
 
 
 # # checkpoint
-filepath="models/AE_CNN_model_v5_refOnly_weights.{epoch:02d}-{val_loss:.2f}.hdf5"
+filepath="models/AE_refOnly_v2_weights.{epoch:02d}-{val_loss:.2f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
 callbacks_list = [checkpoint]
 
@@ -316,7 +316,7 @@ val_loss=MODEL.history['val_loss']
 
 train_loss=MODEL.history['loss']
 
-loss_file=open('models/loss_361_760.txt','a')
+loss_file=open('models/loss_ref_v2_4_51.txt','a')
 for i in np.arange(len(val_loss)): 
 	loss_file.write(str(val_loss[i])+' '+str(train_loss[i])+'\n')
 
@@ -326,6 +326,6 @@ for i in np.arange(len(val_loss)):
 
 
 
-autoEncoder_CNN.save('models/AE_CNN_model_v5_refOnly.h5')
-autoEncoder_CNN.save_weights("models/AE_CNN_model_v5_refOnly_weights.hdf5")
+autoEncoder_CNN.save('models/AE_refOnly_v2.h5')
+autoEncoder_CNN.save_weights("models/AE_refOnly_v2_weights.hdf5")
 

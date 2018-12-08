@@ -38,9 +38,9 @@ for l =1:numel(S_r) % total number of images in the folder
     I = imread(F); %read image
     [H,W,~]= size(I);
 
-    Y = randi(H-PH,1,N); % generate random crop coordinates
+    Y = randi(H-PH,1,N+1); % generate random crop coordinates
     X = randi(W-PW,1,N);
-    coordinates=[X; Y]';
+    coordinates=unique([X; Y]','rows');
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
     % Cropping the Image
