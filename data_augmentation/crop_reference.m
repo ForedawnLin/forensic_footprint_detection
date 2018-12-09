@@ -69,25 +69,17 @@ for l =1:numel(S_r) % total number of images in the folder
                 case 3 
                     %rotation
                     angle_type=randi([0 1]);
-                    [h,w]=size(patch);
-                    width=max(h,w);
-                    patch=imresize(patch,[width,width]);
+                    
                     if angle_type==0
                         theta=randi([-45,45]);                            
-                        patch=imrotate(patch,theta);
-                        theta=abs(theta);
+                        I_patch=imrotate(patch,theta);
                     else
                         theta=randi([135,225]);
-                        patch=imrotate(patch,theta);
-                        theta=abs(theta-180);
+                        I_patch=imrotate(patch,theta);
                     end
-                    angle=theta/180*pi+pi/4;
-                    if angle>pi
-                        angle=angle-pi/2;
-                    end
-                    new_width=width/(sqrt(2)*sin(angle)); % width of cropped area
-                    [h,w]=size(patch); %size of rotated image
-                    patch = imcrop(patch,[h/2-new_width/2,w/2-new_width/2,new_width,new_width]);
+                    rot_patch = ~imrotate(true(size(patch)),theta);
+                    I_patch(rot_patch&~imclearborder(rot_patch)) = 255;
+                    patch=I_patch;
             end
         end       
 
