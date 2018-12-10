@@ -19,70 +19,51 @@ def autoencoder_CNN(input_img):
 	dropRate=0.5
 
 	#drop_input=Dropout(dropRate)(input_img)
-	conv1 = Conv2D(128, (3, 3), activation='relu')(input_img) #28 x 28 x 32
+	conv1 = Conv2D(256, (3, 3), activation='relu')(input_img) #28 x 28 x 32
 	#norm1=BatchNormalization()(conv1)
-	pool1 = MaxPooling2D(pool_size=(2, 2))(conv1) #14 x 14 x 32
+	pool1 = MaxPooling2D(pool_size=(4, 4))(conv1) #14 x 14 x 32
 	#drop1=Dropout(dropRate)(pool1)
 	
 
-	conv2 = Conv2D(256, (3, 3), activation='relu')(pool1) #14 x 14 x 64
-	#norm2=BatchNormalization()(conv2)
-	pool2 = MaxPooling2D(pool_size=(2, 2))(conv2) #7 x 7 x 64
-	#drop2=Dropout(dropRate)(pool2)
+	# conv2 = Conv2D(128, (3, 3), activation='relu')(pool1) #14 x 14 x 64
+	# #norm2=BatchNormalization()(conv2)
+	# pool2 = MaxPooling2D(pool_size=(2, 2))(conv2) #7 x 7 x 64
+	# #drop2=Dropout(dropRate)(pool2)
 	
-	conv3 = Conv2D(512, (3, 3), activation='relu')(pool2) #7 x 7 x 128 (small and thick)
-	pool3 = MaxPooling2D(pool_size=(2, 2))(conv3) #7 x 7 x 64
+	# conv3 = Conv2D(256, (3, 3), activation='relu')(pool2) #7 x 7 x 128 (small and thick)
 	# #norm3=BatchNormalization()(conv3)
-
-	conv4 = Conv2D(16, (3, 3), activation='relu')(pool3) #7 x 7 x 128 (small and thick)
-	# pool4 = MaxPooling2D(pool_size=(2, 2))(conv4) #7 x 7 x 64
-		
-	# conv5 = Conv2D(2048, (2, 2), activation='relu')(pool4) #7 x 7 x 128 (small and thick)
-	# pool4 = MaxPooling2D(pool_size=(2, 2))(conv4) #7 x 7 x 64
+	
 	
 
-	# #decoder
-
-	de_conv1 = Deconvolution2D(512, (3, 3), activation='relu',output_shape=(None,1,14,14))(conv4) #7 x 7 x 128
-	
-	up1 = UpSampling2D((2,2))(de_conv1)
-	de_conv2 = Deconvolution2D(256, (3, 3), activation='relu',output_shape=(None,1,30,30))(up1) #7 x 7 x 128
-	
-
-	up2 = UpSampling2D((2,2))(de_conv2)
-	de_conv3 = Deconvolution2D(128, (3, 3), activation='relu',output_shape=(None,1,62,62))(up2) #7 x 7 x 128
-		
-
-	up3 = UpSampling2D((2,2))(de_conv3)
-	de_conv4 = Deconvolution2D(1, (3, 3), activation='relu',output_shape=(None,1,126,126))(up3) #7 x 7 x 128
-	
+	#decoder
+	# # drop3=Dropout(dropRate)(norm3)
+	# conv4 = Deconvolution2D(256, (3, 3), activation='relu',output_shape=(None,1,31,31))(conv3) #7 x 7 x 128
 	# #norm4=BatchNormalization()(conv4)
 	# up1 = UpSampling2D((2,2))(conv4) # 14 x 14 x 128
 	# #drop4=Dropout(dropRate)(up1)
 		
-	# conv5 = Deconvolution2D(256, (3, 3), activation='relu',output_shape=(None,1,64,64))(up1) # 14 x 14 x 64
+	# conv5 = Deconvolution2D(128, (3, 3), activation='relu',output_shape=(None,1,64,64))(up1) # 14 x 14 x 64
 	# #norm5=BatchNormalization()(conv5)
-	# up2 = UpSampling2D((4,4))(conv5) # 28 x 28 x 64
-	# #drop5=Dropout(dropRate)(up2)
+	up2 = UpSampling2D((4,4))(pool1) # 28 x 28 x 64
+	#drop5=Dropout(dropRate)(up2)
 		
-	#decoded = Deconvolution2D(1, (3, 3), activation='sigmoid',output_shape=(None,1,130,130))(up2) # 28 x 28 x 1
-	decoded =de_conv4
+	decoded = Deconvolution2D(1, (3, 3), activation='sigmoid',output_shape=(None,1,130,130))(up2) # 28 x 28 x 1
+	# decoded =conv3
 
 
 	# CNN classifier 
-	# CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))() #16 x 16 x 128
-	# # drop6=Dropout(dropRate)(CNN_pool_1)
+	#CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))(pool1) #16 x 16 x 128
+	#drop6=Dropout(dropRate)(CNN_pool_1)
 	
-	# CNN_conv_1 = Conv2D(512, (2, 2), activation='relu')(pool2) #1 x 1 x 64
-	# # drop7=Dropout(dropRate)(CNN_conv_1)
-	# CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1)
-
+	CNN_conv_1 = Conv2D(512, (32, 32), activation='relu')(pool1) #1 x 1 x 64
+	drop7=Dropout(dropRate)(CNN_conv_1)
+	
 
 	#CNN_pool_2 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1) #7 x 7 x 64
-	# flat1 = Flatten()(conv4)
-	# dense1=Dense(2048, activation='relu')(flat1)
-	# classifer=Dense(1175, activation='softmax')(dense1)
-	return decoded
+	flat1 = Flatten()(drop7)
+	dense1=Dense(1024, activation='relu')(flat1)
+	classifer=Dense(130, activation='softmax')(dense1)
+	return decoded,classifer
 
 
 
@@ -137,7 +118,7 @@ def load_data(main_path,index_path,label_path):
 	label=[int(label[i])-1 for i in np.arange(len(label))]  ## -1 b/c zero index 
 	return imagePaths_list,label 
 
-mainPath_train='../../FID-300/tracks_cropped/cropped/train_noise/'  ## main path of the pictures 
+mainPath_train='../../FID-300/tracks_cropped/cropped/train/'  ## main path of the pictures 
 train_index_path='../data_augmentation/label_train_index.txt' 
 train_label_path= '../data_augmentation/label_train.txt'
 imagePaths_list_train,label=load_data(mainPath_train,train_index_path,train_label_path)
@@ -154,35 +135,35 @@ print ('label num:',len(list(set(label))))
 
 
 
-# def process_label(test_label_set,train_label_set):
-# 	### the function process train label and test labe so that the labels are from 1:130 
-# 	### new labels are 1 based 
-# 	dic_classes={} 
-# 	i=0
-# 	test_label_set_new=[]
-# 	reference_table={} ### look up table for new labels 
-# 	for classes in set(train_label_set):
-# 		reference_table[classes]=i
-# 		i+=1
-# 	#print ('reference_table',reference_table) 
-# 	# for label in train_label_set:
-# 	# 	try:
-# 	# 		a=1
-# 	# 		#print (reference_table[label]) 
-# 	# 	except:
-# 	# 		a=1 
-# 	# 		#print ('key error',label)
+def process_label(test_label_set,train_label_set):
+	### the function process train label and test labe so that the labels are from 1:130 
+	### new labels are 1 based 
+	dic_classes={} 
+	i=0
+	test_label_set_new=[]
+	reference_table={} ### look up table for new labels 
+	for classes in set(train_label_set):
+		reference_table[classes]=i
+		i+=1
+	#print ('reference_table',reference_table) 
+	# for label in train_label_set:
+	# 	try:
+	# 		a=1
+	# 		#print (reference_table[label]) 
+	# 	except:
+	# 		a=1 
+	# 		#print ('key error',label)
 
-# 	train_label_set_new=[reference_table[label] for label in train_label_set]
-# 	test_label_set_new=[reference_table[label] for label in test_label_set]
+	train_label_set_new=[reference_table[label] for label in train_label_set]
+	test_label_set_new=[reference_table[label] for label in test_label_set]
 
-# 	return train_label_set_new,test_label_set_new,reference_table 	
+	return train_label_set_new,test_label_set_new,reference_table 	
 
-# label,label_test,reference_table=process_label(label_test,label)
+label,label_test,reference_table=process_label(label_test,label)
 
 
 
-max_label=1175
+max_label=130
 
 image_num=np.size(imagePaths_list_train) ### total image numbers 
 
@@ -239,12 +220,12 @@ img_w=np.shape(img)[1] ### input layer image width
 img_channel=1 ### input layer image width, gray image 	
 print ('imag_shape',img_h,img_w,img_channel)
 
-resize_w=134; ### resize image to before feeding into network 
-resize_h=134;
+resize_w=130; ### resize image to before feeding into network 
+resize_h=130;
 input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 autoEncoder_CNN = Model(input_img, autoencoder_CNN(input_img)) ### create model 
 #sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-autoEncoder_CNN.compile(loss=[AE_loss],optimizer = 'Adagrad',loss_weights=[0.5])
+autoEncoder_CNN.compile(loss=[AE_loss,Classifier_loss],optimizer = 'Adagrad',loss_weights=[0.5, 0.5])
 print ('metric_name:',autoEncoder_CNN.metrics_names)
 #autoEncoder_CNN.summary()
 
@@ -275,21 +256,48 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 	image_batch=np.array(image_batch)
 	label_batch=np.array(label_batch)
 	#print (np.shape(label_batch))
-	return image_batch, image_batch ##(input, output)
+	return image_batch, image_batch,label_batch ##(input, output)
 
 
 
 
 #### Evaluation #######
 		
-autoEncoder_CNN.load_weights('models/results/AE_CNN_model_v5_refOnly_weights.343-0.02.hdf5')
+autoEncoder_CNN.load_weights('models/AE_CNN_model_v5_weights.01-4.93.hdf5')
 
 
 ### test eval #######
 
 ######## label check ##########
-data_x,_=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label) 
-img_pred=autoEncoder_CNN.predict(data_x, batch_size=None, verbose=0, steps=None)
+data_x,_,_=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label) 
+img_pred,y_pred=autoEncoder_CNN.predict(data_x, batch_size=None, verbose=0, steps=None)
+
+y_pred=np.argmax(y_pred,1)
+print (np.shape(img_pred))
+acc=np.divide(np.sum(y_pred==valid_label),len(y_pred))
+print ('test_acc:',acc)
+wrong_index=[valid_label[i] for i in np.arange(len(y_pred)) if y_pred[i]!=valid_label[i]]
+right_index=[valid_label[i] for i in np.arange(len(y_pred)) if y_pred[i]==valid_label[i]]
+print ('wrong class',wrong_index)
+print ('right class',right_index)
+print ('intersection:',set(wrong_index).intersection(set(right_index)))
+print ('entire comparison',y_pred==valid_label)
+print ('entire label',valid_label)
+compare=y_pred==valid_label
+right_list=[valid_imagePaths_list[i] for i in np.arange(len(y_pred)) if compare[i]==True]
+wrong_list=[valid_imagePaths_list[i] for i in np.arange(len(y_pred)) if compare[i]==False]
+print ('right_classification_num:',len(right_list),'wrong_classification_num:',len(wrong_list))
+
+# for right_img_path in right_list:
+# 	right_img=cv2.imread(right_img_path)
+# 	cv2.imshow('right_img',right_img)
+# 	cv2.waitKey()
+
+# for wrong_img_path in wrong_list:
+# 	wrong_img=cv2.imread(wrong_img_path)
+# 	cv2.imshow('wrong_img',wrong_img)
+# 	cv2.waitKey()
+
 
 ####### reconstruction check #########
 for i in (14,15):
@@ -302,4 +310,60 @@ for i in (14,15):
 	cv2.imshow('orig',img_orig)
 	cv2.imshow('recons',img_pred_test)
 	cv2.waitKey()
+
+for label in wrong_index:
+	print ('wrong class freq:',str(label),np.sum(train_label==label*np.ones(len(train_label))))
+
+for label in right_index:
+	print ('right class freq:',str(label),np.sum(train_label==label*np.ones(len(train_label))))
+
+
+
+# ##### train eval ##########
+
+# ######## label check ##########
+# num2check=100
+# data_x_train,_,_=generate_data(train_random_paths,train_random_label,train_num,num2check,resize_w,resize_h,max_label) 
+# img_pred_train,y_pred_train=autoEncoder_CNN.predict(data_x_train, batch_size=None, verbose=0, steps=None)
+
+# y_pred_train=np.argmax(y_pred_train,1)
+# train_label=train_random_label[:num2check]
+# acc=np.divide(np.sum(y_pred_train==train_label),len(y_pred_train))
+# print ('test_acc:',acc)
+# wrong_index_train=[train_label[i] for i in np.arange(len(y_pred_train)) if y_pred_train[i]!=train_label[i]]
+# print ('wrong class',wrong_index_train)
+# print ('entire comparison',y_pred_train==train_label)
+
+
+
+# ####### reconstruction check #########
+# img2check=3; ### the image in test set to check 
+# img_orig_train= cv2.imread(train_random_paths[img2check])[:,:,1]
+# img_orig_train= cv2.resize(img_orig_train,(128,128))/255  ### -2 for maxpool and upsample commendation 
+# img_pred_train=img_pred_train[img2check,:,:,0]
+# img_pred_train=np.squeeze(img_pred_train)
+# cv2.imshow('orig_train',img_orig_train)
+# cv2.imshow('recons_train',img_pred_train)
+# cv2.waitKey()
+
+
+
+
+
+
+
+
+
+# checkpoint
+# filepath="models/AE_CNN_model_weights.{epoch:02d}-{val_loss:.2f}.hdf5"
+# checkpoint = ModelCheckpoint(filepath, monitor='val_dense_1_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
+# callbacks_list = [checkpoint]
+
+
+# autoEncoder_CNN.fit_generator(generator=generate_data(train_random_paths,train_random_label,train_num,batch_size,resize_w,resize_h,max_label),
+#                      steps_per_epoch=iters_batch, epochs=epochs,validation_data=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label),validation_steps=valid_iters_batch,callbacks=callbacks_list,shuffle=True)
+
+
+# autoEncoder_CNN.save('models/AE_CNN_model.h5')
+# autoEncoder_CNN.save_weights("models/AE_CNN_model_weights.h5")
 

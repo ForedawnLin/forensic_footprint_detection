@@ -79,10 +79,10 @@ def autoencoder_CNN(input_img):
 
 
 	#CNN_pool_2 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1) #7 x 7 x 64
-	# flat1 = Flatten()(conv4)
-	# dense1=Dense(2048, activation='relu')(flat1)
-	# classifer=Dense(1175, activation='softmax')(dense1)
-	return decoded
+	flat1 = Flatten()(conv4)
+	dense1=Dense(2048, activation='relu')(flat1)
+	classifer=Dense(1175, activation='softmax')(dense1)
+	return decoded,classifer
 
 
 
@@ -111,7 +111,7 @@ def Classifier_loss(y_true,y_pred):
 
 
 ### load data ###
-def load_data(main_path,index_path,label_path):
+def load_data_test(main_path,index_path,label_path):
 	pic_fmt='.jpg'  ## picture format 
 	imagePaths_list=[]  ## init image paths
 	FileID_index=open(index_path,'r')
@@ -119,8 +119,10 @@ def load_data(main_path,index_path,label_path):
 		indice=indice.replace(' ','')
 		#indice=indice.replace('r','',1)
 		index=indice.split(',')
+	#print (index)	
 	index=index[:-1]
-	indice=index
+	indice=index 
+	# indice=[]
 	# for path in index:
 	# 	if 'r' in path:
 	# 		indice.append('r'+path)
@@ -137,21 +139,64 @@ def load_data(main_path,index_path,label_path):
 	label=[int(label[i])-1 for i in np.arange(len(label))]  ## -1 b/c zero index 
 	return imagePaths_list,label 
 
-mainPath_train='../../FID-300/tracks_cropped/cropped/train_noise/'  ## main path of the pictures 
+#################################################################################### 
+
+def load_data_train(main_path,index_path,label_path):
+	### use reference img only ###
+	pic_fmt='.jpg'  ## picture format 
+	imagePaths_list=[]  ## init image paths
+	FileID_index=open(index_path,'r')
+	for indice in FileID_index:
+		indice=indice.replace(' ','')
+		#indice=indice.replace('r','',1)
+		index=indice.split(',')
+	#print (index)	
+	index=index[:-1]
+	indice=index 
+###### reference image only #######
+	index_r=[]
+	r_num=[] 
+	i=0;
+	for each_index in indice:
+		if 'r' in each_index:
+			index_r.append(each_index)
+			r_num.append(i)
+		i+=1
+	
+####### ends ######################
+
+	FileID_label=open(label_path,'r')
+	for labels in FileID_label:
+		label=labels.split(',')
+	label=label[:-1]
+
+	#print (label)
+	imagePaths_list=[main_path+index_r[i]+pic_fmt for i in np.arange(len(index_r))]
+	#label=[int(label[i])-1 for i in np.arange(len(label))]  ## -1 b/c zero index 
+	label=[int(label[i])-1 for i in r_num]  ## reference image only  
+	return imagePaths_list,label 
+
+
+
+####################################################################################
+
+
+mainPath_train='../../FID-300/tracks_cropped/cropped/train/'  ## main path of the pictures 
 train_index_path='../data_augmentation/label_train_index.txt' 
 train_label_path= '../data_augmentation/label_train.txt'
-imagePaths_list_train,label=load_data(mainPath_train,train_index_path,train_label_path)
+imagePaths_list_train,label=load_data_test(mainPath_train,train_index_path,train_label_path)
+
 
 mainPath_test='../../FID-300/tracks_cropped/cropped/test/'  ## main path of the pictures 
 test_index_path='../data_augmentation/label_test_index.txt' 
 test_label_path= '../data_augmentation/label_test.txt'
-imagePaths_list_test,label_test=load_data(mainPath_test,test_index_path,test_label_path)
+imagePaths_list_test,label_test=load_data_test(mainPath_test,test_index_path,test_label_path)
 
-print (imagePaths_list_test)
-print ('label_test:',label_test)
+
+#print ('train_list:',imagePaths_list_train)
+#print (label_test)
 print ('label num:',len(list(set(label))))
-
-
+# print ('train image label',len(label))
 
 
 # def process_label(test_label_set,train_label_set):
@@ -181,7 +226,6 @@ print ('label num:',len(list(set(label))))
 # label,label_test,reference_table=process_label(label_test,label)
 
 
-
 max_label=1175
 
 image_num=np.size(imagePaths_list_train) ### total image numbers 
@@ -199,14 +243,14 @@ train_label=label[:train_num]
 valid_imagePaths_list=imagePaths_list_test
 valid_label=label_test
 valid_num=len(valid_label)
-#print ('test_label',label_test)
 print ('valid_image_num', len(valid_imagePaths_list))
 print ('valid_label_num',valid_num)
 
 print ('img_num:',image_num)
 print ('train_num:',train_num)
-#print ('valid_num:',valid_num)
+# print ('valid_num:',valid_num)
 print ('test_num:',len(valid_label))
+# print('test_img_path_num',valid_imagePaths_list)
 
 
 
@@ -214,7 +258,12 @@ print ('test_num:',len(valid_label))
 train_ord=np.random.permutation(train_num)
 train_random_paths=[train_imagePaths_list[i] for i in train_ord] ### randomize training image paths
 train_random_label=[train_label[i] for i in train_ord]
-#print (train_random_label)
+#print (len(train_random_label))
+
+a=train_random_paths[0].split('/')
+
+print ('train_path',a[0]+'/'+a[1]+'/'+a[2]+'/'+a[3]+'/'+a[4]+'/'+a[5]+'/'+a[6])
+
 
 
 batch_size = 32
@@ -244,9 +293,12 @@ resize_h=134;
 input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 autoEncoder_CNN = Model(input_img, autoencoder_CNN(input_img)) ### create model 
 #sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-autoEncoder_CNN.compile(loss=[AE_loss],optimizer = 'Adagrad',loss_weights=[0.5])
+autoEncoder_CNN.compile(loss=[AE_loss,Classifier_loss],optimizer = 'sgd',loss_weights=[0.5, 0.5])
 print ('metric_name:',autoEncoder_CNN.metrics_names)
-#autoEncoder_CNN.summary()
+autoEncoder_CNN.summary()
+		
+
+
 
 
 def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_label):
@@ -256,50 +308,55 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 	### batch_size: the batch size 
 	### w,h: resize size for input imgage  
 	### max_label: the lagest label num, define the one-hot vector dimension 
-	image_batch=[] ### batched image 
-	label_batch=[] ### asscociated batched labels 
-	i=0
-	for index in np.arange(batch_size):
-		img_path=img_paths_list[i]
-		label=label_list[i]
-		i+=1;			
-		img= cv2.imread(img_path)[:,:,1]
-		# print ('img',np.shape(img))
-		img= cv2.resize(img,(w,h))/255  ### -2 for maxpool and upsample commendation 
-		img= np.reshape(img,(np.shape(img)[0],np.shape(img)[1],1)) ## instead of m*n, reshape img to 1*m*n*1 for keras input 
-		image_batch.append(img)
-		label_vector= np.zeros(max_label)
-		# print (np.shape(label_vector))
-		label_vector[label]=1
-		label_batch.append(label_vector)
-	image_batch=np.array(image_batch)
-	label_batch=np.array(label_batch)
-	#print (np.shape(label_batch))
-	return image_batch, image_batch ##(input, output)
+	i=0 
+	while True:
+		image_batch=[] ### batched image 
+		image_noNoise_batch=[] ### no noise 
+		label_batch=[] ### asscociated batched labels 
+		for index in np.arange(batch_size):
+			if i==total_image_num:
+				i=0 
+				train_ord=np.random.permutation(total_image_num)
+				img_paths_list=[img_paths_list[j] for j in train_ord] ### randomize training image paths
+			img_path=img_paths_list[i]
+			label=label_list[i]
+			i+=1;	
+			img= cv2.imread(img_path)[:,:,1]
+			# print ('img',np.shape(img))
+			img= cv2.resize(img,(w,h))/255  ### -2 for maxpool and upsample commendation 
+			img= np.reshape(img,(np.shape(img)[0],np.shape(img)[1],1)) ## instead of m*n, reshape img to 1*m*n*1 for keras input 
+			image_batch.append(img)
+			
+			img_path_list=img_path.split('/')
+			img_path_no_noise=img_path_list[0]+'/'+img_path_list[1]+'/'+img_path_list[2]+'/'+img_path_list[3]+'/'+img_path_list[4]+'/'+'train_noise'+'/'+img_path_list[6]
+			#print (img_path_no_noise)
+			img_noNoise= cv2.imread(img_path_no_noise)[:,:,1]
+			# print ('img',np.shape(img))
+			img_noNoise= cv2.resize(img_noNoise,(w,h))/255  ### -2 for maxpool and upsample commendation 
+			img_noNoise= np.reshape(img_noNoise,(np.shape(img_noNoise)[0],np.shape(img_noNoise)[1],1)) ## instead of m*n, reshape img to 1*m*n*1 for keras input 
+			image_noNoise_batch.append(img_noNoise)
 
 
+			label_vector= np.zeros(max_label)
+			# print (np.shape(label_vector))
+			label_vector[label]=1
+			label_batch.append(label_vector)
+		image_batch=np.array(image_batch)
+		label_batch=np.array(label_batch)
+		#print (np.shape(label_batch))
+		yield (image_batch, [image_noNoise_batch,label_batch]) ##(input, output)
 
 
-#### Evaluation #######
-		
-autoEncoder_CNN.load_weights('models/results/AE_CNN_model_v5_refOnly_weights.343-0.02.hdf5')
+# # checkpoint
+filepath="models/AE_CNN_model_v5_130_weights.{epoch:02d}-{val_dense_2_loss:.2f}.hdf5"
+checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=False, mode='min',save_weights_only=False) ### save model based on classification loss 
+callbacks_list = [checkpoint]
 
 
-### test eval #######
+MODEL=autoEncoder_CNN.fit_generator(generator=generate_data(train_random_paths,train_random_label,train_num,batch_size,resize_w,resize_h,max_label),
+                     steps_per_epoch=iters_batch, epochs=epochs,validation_data=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label),validation_steps=valid_iters_batch,callbacks=callbacks_list,shuffle=True)
 
-######## label check ##########
-data_x,_=generate_data(valid_imagePaths_list,valid_label,valid_num,valid_batch_size,resize_w,resize_h,max_label) 
-img_pred=autoEncoder_CNN.predict(data_x, batch_size=None, verbose=0, steps=None)
-
-####### reconstruction check #########
-for i in (14,15):
-	print (valid_imagePaths_list[i])
-	img2check=i ### the image in test set to check 
-	img_orig= cv2.imread(valid_imagePaths_list[img2check])[:,:,1]
-	img_orig= cv2.resize(img_orig,(128,128))/255  ### -2 for maxpool and upsample commendation 
-	img_pred_test=img_pred[img2check,:,:,0]
-	img_pred_test=np.squeeze(img_pred_test)
-	cv2.imshow('orig',img_orig)
-	cv2.imshow('recons',img_pred_test)
-	cv2.waitKey()
+print (MODEL.history['val_loss'])
+autoEncoder_CNN.save('models/AE_CNN_model.h5')
+autoEncoder_CNN.save_weights("models/AE_CNN_model_weights.h5")
 

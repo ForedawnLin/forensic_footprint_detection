@@ -1,0 +1,7 @@
+data_augmentation/*.txt
+algo_devel/models/*.h5
+algo_devel/models/*.hdf5
+algo_devel/models/results/*.h5
+algo_devel/models/results/*.hdf5
+algo_devel/models/results/*.txt
+

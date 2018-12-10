@@ -16,50 +16,63 @@ import cv2
 
 
 def autoencoder_CNN(input_img):
-	dropRate=0.25
+	dropRate=0.5
 
 	conv1 = Conv2D(64, (5, 5), activation='relu', padding='same')(input_img) #28 x 28 x 32
 	#norm1=BatchNormalization()(conv1)
 	pool1 = MaxPooling2D(pool_size=(2, 2))(conv1) #14 x 14 x 32
-	#drop1=Dropout(dropRate)(pool1)
+	drop1=Dropout(dropRate)(pool1)
 	
 
-	conv2 = Conv2D(128, (3, 3), activation='relu', padding='same')(pool1) #14 x 14 x 64
+	conv2 = Conv2D(128, (3, 3), activation='relu', padding='same')(drop1) #14 x 14 x 64
 	#norm2=BatchNormalization()(conv2)
 	pool2 = MaxPooling2D(pool_size=(2, 2))(conv2) #7 x 7 x 64
-	#drop2=Dropout(dropRate)(pool2)
+	drop2=Dropout(dropRate)(pool2)
 	
-	conv3 = Conv2D(256, (3, 3), activation='relu', padding='same')(pool2) #7 x 7 x 128 (small and thick)
-	#norm3=BatchNormalization()(conv3)
+	conv3 = Conv2D(256, (3, 3), activation='relu', padding='same')(drop2) #7 x 7 x 128 (small and thick)
+	# norm3=BatchNormalization()(conv3)
 	
 	
 
 	#decoder
-	#drop3=Dropout(dropRate)(norm3)
+	# drop3=Dropout(dropRate)(conv3)
 	conv4 = Conv2D(256, (3, 3), activation='relu', padding='same')(conv3) #7 x 7 x 128
 	#norm4=BatchNormalization()(conv4)
 	up1 = UpSampling2D((2,2))(conv4) # 14 x 14 x 128
-	#drop4=Dropout(dropRate)(up1)
+	drop4=Dropout(dropRate)(up1)
 		
-	conv5 = Conv2D(128, (3, 3), activation='relu', padding='same')(up1) # 14 x 14 x 64
+	conv5 = Conv2D(128, (3, 3), activation='relu', padding='same')(drop4) # 14 x 14 x 64
 	#norm5=BatchNormalization()(conv5)
 	up2 = UpSampling2D((2,2))(conv5) # 28 x 28 x 64
-	#drop5=Dropout(dropRate)(up2)
+	drop5=Dropout(dropRate)(up2)
 		
-	decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(up2) # 28 x 28 x 1
+	decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(drop5) # 28 x 28 x 1
+
+
+
 
 	# CNN classifier 
 	CNN_pool_1 = MaxPooling2D(pool_size=(2, 2))(conv3) #16 x 16 x 128
-	#drop6=Dropout(dropRate)(CNN_pool_1)
+	drop6=Dropout(dropRate)(CNN_pool_1)
 	
-	CNN_conv_1 = Conv2D(256, (16, 16), activation='relu')(CNN_pool_1) #1 x 1 x 64
+	CNN_conv_2 = Conv2D(512, (3, 3), activation='relu',padding='same')(drop6) #1 x 1 x 64
 	#drop7=Dropout(dropRate)(CNN_conv_1)
+	CNN_pool_2 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_2) #16 x 16 x 128
+	drop7=Dropout(dropRate)(CNN_pool_2)
 	
 
+	CNN_conv_3 = Conv2D(1024, (3, 3), activation='relu',padding='same')(drop7) #1 x 1 x 64
+	#drop7=Dropout(dropRate)(CNN_conv_1)
+	CNN_pool_3 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_3) #16 x 16 x 128
+	drop8=Dropout(dropRate)(CNN_pool_3)
+	
+	CNN_conv_4 = Conv2D(1175, (4, 4), activation='relu')(drop8) #1 x 1 x 1175
+	
 	#CNN_pool_2 = MaxPooling2D(pool_size=(2, 2))(CNN_conv_1) #7 x 7 x 64
-	flat1 = Flatten()(CNN_conv_1)
+	flat1 = Flatten()(CNN_conv_4)
 	#dense1=Dense(1000, activation='relu')(flat1)
-	classifer=Dense(1175, activation='softmax')(flat1)
+	# classifer=Dense(1175, activation='softmax')(flat1)
+	classifer=flat1
 	return decoded,classifer
 
 
@@ -193,7 +206,7 @@ resize_h=128;
 input_img = Input(shape = (resize_w, resize_h, img_channel)) ### -2 for maxpool and upsample commendation 
 autoEncoder_CNN = Model(input_img, autoencoder_CNN(input_img)) ### create model 
 #sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-autoEncoder_CNN.compile(loss=[AE_loss,Classifier_loss],optimizer = 'sgd',loss_weights=[0.5, 0.5])
+autoEncoder_CNN.compile(loss=[AE_loss,Classifier_loss],optimizer = 'sgd',loss_weights=[0, 1])
 print ('metric_name:',autoEncoder_CNN.metrics_names)
 autoEncoder_CNN.summary()
 		
@@ -237,8 +250,8 @@ def generate_data(img_paths_list,label_list,total_image_num,batch_size,w,h,max_l
 
 
 # # checkpoint
-filepath="models/AE_CNN_model_weights.{epoch:02d}-{val_dense_1_loss:.2f}.hdf5"
-checkpoint = ModelCheckpoint(filepath, monitor='val_dense_1_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
+filepath="models/AE_CNN_model_weights.{epoch:02d}-{val_flatten_1_loss:.2f}.hdf5"
+checkpoint = ModelCheckpoint(filepath, monitor='val_flatten_1_loss', verbose=1, save_best_only=True, mode='min',save_weights_only=False) ### save model based on classification loss 
 callbacks_list = [checkpoint]
 
 
