@@ -1,11 +1,18 @@
+clc
+clear all
+
 PH = 240; % set size of croped image
 PW = 100; % set size of croped image
 path=pwd;
-path_reference=strcat(path,'/../../FID-300/references')
+
+
 path =strcat(path,'/../../FID-300/tracks_cropped');
-%path_reference =strcat(path,'/references');
-%path =strcat(path,'/tracks_cropped');
-N = 50; % set number of croped image
+path_reference =strcat(path,'/../../FID-300/references');
+% path =strcat(path,'/tracks_cropped');
+
+
+N = 100; % set number of croped image
+
 
 S_r = dir(fullfile(path_reference,'*.png'));
 S=dir(fullfile(path,'*.jpg'));
@@ -33,9 +40,9 @@ for l =1:numel(S_r) % total number of images in the folder
     I = imread(F); %read image
     [H,W,~]= size(I);
 
-    Y = randperm(H-PH,N); % generate random crop coordinates
-    X = randperm(W-PW,N);
-    coordinates=unique([X; Y]','rows');
+    Y = randi(H-PH,1,N); % generate random crop coordinates
+    X = randi(W-PW,1,N);
+    coordinates=[X; Y]';
     % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
     % Cropping the Image
